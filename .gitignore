@@ -1,7 +1,7 @@
 build/*
 .cache/*
 onnxruntime/*
-resnet.onnx
+*.onnx
 *.png
 *.jpeg
 *.jpg

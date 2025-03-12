@@ -125,7 +125,7 @@ struct ResNetSession {
 
     std::ptrdiff_t Run() {
         const char* input_names[] = {"data"};
-        const char* output_names[] = {"resnetv22_dense0_fwd"};
+        const char* output_names[] = {"resnetv18_dense0_fwd"};
 
         Ort::RunOptions run_options;
         session_.Run(run_options, input_names, &input_tensor_, 1, output_names, &output_tensor_, 1);
@@ -140,7 +140,7 @@ struct ResNetSession {
 
 private:
   Ort::Env env;
-  Ort::Session session_{env, "../resnet.onnx", Ort::SessionOptions{nullptr}};
+  Ort::Session session_{env, "../resnet_101.onnx", Ort::SessionOptions{nullptr}};
 
   Ort::Value input_tensor_{nullptr};
   std::array<int64_t, 4> input_shape_{1, 3, width_, height_};

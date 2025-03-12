@@ -1,5 +1,8 @@
 #include "websocketpp/common/connection_hdl.hpp"
 #include "websocketpp/frame.hpp"
+#include <opencv2/core.hpp>
+#include <opencv2/core/base.hpp>
+#include <opencv2/core/mat.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <string>
@@ -120,6 +123,17 @@ int print_image(const std::string fpath){
 };
 
 
+void normalize_img(cv::Mat &img, cv::Mat &result){
+    cv::Scalar mean, std;
+    std::vector<cv::Mat> channels(3);
+    cv::split(img, channels);
+    cv::meanStdDev(img, mean, std);
+    std::cout << "Mean: " << mean << "\tStd Dev: " << std << std::endl;
+    for (int c = 0; c < 3; c++){
+        channels[c] = (channels[c] - mean[c]) / std[c];
+    }
+    cv::merge(channels, result);
+};
 
  
 int main() {
@@ -135,11 +149,17 @@ int main() {
 
     // resize image to desired model size
     cv::Mat resized_array;
-    cv::Mat final_img;
+    cv::Mat pre_process_img;
     cv::resize(img, resized_array, cv::Size(224, 224));
-    resized_array.convertTo(final_img, CV_32F, 1.0/255.0);
+    resized_array.convertTo(pre_process_img, CV_32F, 1.0/255.0);
 
     // TODO normalize image 
+    //
+
+    cv::Mat final_img;
+    normalize_img(pre_process_img, final_img);
+
+
     float *buffer = final_img.ptr<float>();
 
     std::cout << "Size: " << final_img.total() << "\t Channels: " << final_img.channels();
