@@ -3,5 +3,9 @@ build/*
 onnxruntime/*
 resnet.onnx
 *.png
+*.jpeg
+*.jpg
 websocketpp/
+
 onnxruntime-inference-examples/
+.DS_Store

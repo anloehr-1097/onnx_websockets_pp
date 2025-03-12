@@ -4,10 +4,10 @@
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 #include <functional>
-#include <onnxruntime_cxx_api.h>
+// #include <onnxruntime_cxx_api.h>
+#include "inference.hpp"
 
 typedef websocketpp::server<websocketpp::config::asio> server;
-
 class utility_server;
 void outside_handler(utility_server &us, websocketpp::connection_hdl hdl, server::message_ptr msg);
 
@@ -101,6 +101,10 @@ void outside_handler(utility_server &us, websocketpp::connection_hdl hdl, server
  
 int main() {
     utility_server s;
+
+
+    auto onnx_sess = ResNetSession();
+    onnx_sess.print_info();
 
     s.set_message_handler([&s](websocketpp::connection_hdl hdl, server::message_ptr msg){outside_handler(s, hdl, msg);});
     s.run();
