@@ -4,3 +4,4 @@ onnxruntime/*
 resnet.onnx
 *.png
 websocketpp/
+onnxruntime-inference-examples/
