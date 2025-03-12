@@ -1,6 +1,7 @@
 #include "websocketpp/common/connection_hdl.hpp"
 #include "websocketpp/frame.hpp"
 #include <opencv2/highgui.hpp>
+#include <opencv2/imgcodecs.hpp>
 #include <string>
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
@@ -63,15 +64,13 @@ public:
 
     void image_handler(websocketpp::connection_hdl hdl, server::message_ptr msg) {
         // verify that message type is binary
-
-        
-
+        // TODO
         m_endpoint.send(hdl, msg->get_payload(), msg->get_opcode());
     }
 
     void duplicate_handler(websocketpp::connection_hdl hdl, server::message_ptr msg) {
+        // example handler member function impl
         // write a new message
-
         // do something with payload - here duplication
         std::string new_msg_payload(msg->get_raw_payload() + msg->get_raw_payload());  // non const ref to payload
         m_endpoint.send(hdl, new_msg_payload, msg->get_opcode());
@@ -97,12 +96,16 @@ void outside_handler(utility_server &us, websocketpp::connection_hdl hdl, server
     };
 
     us.send(hdl, new_msg_payload, websocketpp::frame::opcode::text);
-    // m_endpoint.send(hdl, new_msg_payload, msg->get_opcode());
 }
 
 
 int print_image(const std::string fpath){
-    cv::Mat image = cv::imread(fpath, cv::IMREAD_COLOR);
+    cv::Mat image = cv::imread(fpath, cv::IMREAD_COLOR_RGB);
+
+    std::cout << image.size();
+    std::cout << image.channels();
+    std::cout << image.type();
+    std::cout << std::endl;
 
     if ( !image.data )
     {
@@ -124,10 +127,32 @@ int main() {
 
 
     auto onnx_sess = ResNetSession();
-    onnx_sess.print_info();
-    print_image("../test_img.jpeg");
+    onnx_sess.getInputAndOutputNames();
+
+    // read image from disk
+    auto img = cv::imread("../test_img_dog.jpeg", cv::IMREAD_COLOR_RGB);
+
+
+    // resize image to desired model size
+    cv::Mat resized_array;
+    cv::Mat final_img;
+    cv::resize(img, resized_array, cv::Size(224, 224));
+    resized_array.convertTo(final_img, CV_32F, 1.0/255.0);
+
+    // TODO normalize image 
+    float *buffer = final_img.ptr<float>();
+
+    std::cout << "Size: " << final_img.total() << "\t Channels: " << final_img.channels();
+    std::cout << "\n Dims: " << final_img.size << std::endl;
+    
+    onnx_sess.set_input_tensor(buffer, final_img.total() * final_img.channels());
+    // print_image("../test_img.jpeg");
+
+
+    auto res = onnx_sess.Run();
+    std::cout << "Result: " << res << std::endl;
 
     s.set_message_handler([&s](websocketpp::connection_hdl hdl, server::message_ptr msg){outside_handler(s, hdl, msg);});
-    s.run();
+    // s.run();
     return 0;
 }
