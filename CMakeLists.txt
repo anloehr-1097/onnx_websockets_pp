@@ -80,13 +80,16 @@ include_directories("${ONNXRUNTIME_ROOTDIR}/include"                           #
 
 link_directories("${ONNXRUNTIME_ROOTDIR}/lib")
 
+find_package( OpenCV REQUIRED )
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+
 add_executable(main main.cpp inference.hpp)
 target_include_directories(main PUBLIC "/Users/anlhr/Projects/onnx_websockets/websocketpp" "/opt/homebrew/include" "/Users/anlhr/Projects/onnx_websockets/onnxruntime/include")
 
 # Define ASIO_STANDALONE for standalone Asio usage
 target_compile_definitions(main PRIVATE ASIO_STANDALONE)
 # target_link_libraries(main PRIVATE pthread ${ONNXRUNTIME_ROOTDIR}/lib/libonnxruntime.dylib)
-target_link_libraries(main PRIVATE pthread libonnxruntime.dylib)
+target_link_libraries(main PRIVATE pthread libonnxruntime.dylib ${OpenCV_LIBS})
 
 # target_link_libraries(np_interop PRIVATE ${TORCH_LIBRARIES} ${TORCH_PYTHON_LIBRARY} Eigen3::Eigen)
 # # target_link_libraries(np_interop PRIVATE ${TORCH_LIBRARIES} ${TORCH_PYTHON_LIBRARY})

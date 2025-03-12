@@ -1,5 +1,6 @@
 #include "websocketpp/common/connection_hdl.hpp"
 #include "websocketpp/frame.hpp"
+#include <opencv2/highgui.hpp>
 #include <string>
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
@@ -98,6 +99,25 @@ void outside_handler(utility_server &us, websocketpp::connection_hdl hdl, server
     us.send(hdl, new_msg_payload, websocketpp::frame::opcode::text);
     // m_endpoint.send(hdl, new_msg_payload, msg->get_opcode());
 }
+
+
+int print_image(const std::string fpath){
+    cv::Mat image = cv::imread(fpath, cv::IMREAD_COLOR);
+
+    if ( !image.data )
+    {
+        printf("No image data \n");
+        return -1;
+    }
+    cv::namedWindow("Display Image", cv::WINDOW_NORMAL);
+    cv::imshow("Display Image", image);
+    cv::waitKey(0);
+ 
+    return 0;
+};
+
+
+
  
 int main() {
     utility_server s;
@@ -105,6 +125,7 @@ int main() {
 
     auto onnx_sess = ResNetSession();
     onnx_sess.print_info();
+    print_image("../test_img.jpeg");
 
     s.set_message_handler([&s](websocketpp::connection_hdl hdl, server::message_ptr msg){outside_handler(s, hdl, msg);});
     s.run();

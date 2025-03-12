@@ -3,6 +3,10 @@
 #include <array>
 #include <cstdint>
 #include<onnxruntime_cxx_api.h>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/opencv.hpp>
+
 
 
 template <typename T>
@@ -69,4 +73,5 @@ private:
   Ort::Value output_tensor_{nullptr};
   std::array<int64_t, 2> output_shape_{1, 10};
 };
+
 
