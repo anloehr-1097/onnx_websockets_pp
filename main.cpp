@@ -7,6 +7,7 @@
 #include <opencv2/core/mat.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 #include <string>
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
@@ -17,7 +18,7 @@
 typedef websocketpp::server<websocketpp::config::asio> server;
 class utility_server;
 void outside_handler(utility_server &us, websocketpp::connection_hdl hdl, server::message_ptr msg);
-
+cv::Mat preprocess_img(cv::Mat& mat, cv::Size sz);
 
 class utility_server {
 public:
@@ -94,16 +95,26 @@ void outside_handler(utility_server &us, websocketpp::connection_hdl hdl, server
     // write a new message
     std::string new_msg_payload;
     if (msg->get_opcode() == websocketpp::frame::opcode::binary){
-        new_msg_payload = "This is a bytes frame"; // non const ref to payload
         std::vector<uchar> payload_2(msg->get_payload().begin(), msg->get_payload().end());
-        cv::Mat img = cv::imdecode(payload_2, cv::IMREAD_UNCHANGED);
-         if (img.empty()) {
+        cv::Mat img = cv::imdecode(payload_2, cv::IMREAD_COLOR_RGB);
+        cv::Mat new_img = preprocess_img(img, cv::Size(224,224));
+
+
+         if (new_img.empty()) {
                 throw std::runtime_error("Failed to decode image from byte string");
         }
+
+        auto onnx_sess = ResNetSession();
+        float *buffer = new_img.ptr<float>();
+        onnx_sess.set_input_tensor(buffer, new_img.total() * new_img.channels());
+        auto res = onnx_sess.Run();
+        std::cout << "Result: " << res << std::endl;
+        new_msg_payload = "Bytes frame. Image has size (" + std::to_string(new_img.rows) + "," +std::to_string(new_img.cols) + ") yielding result: " + std::to_string(res); // non const ref to payload
     } 
     else {
         new_msg_payload = "This is a text frame"; // non const ref to payload
     };
+
 
     us.send(hdl, new_msg_payload, websocketpp::frame::opcode::text);
 }
@@ -130,18 +141,44 @@ int print_image(const std::string fpath){
 };
 
 
+
+
 void normalize_img(cv::Mat &img, cv::Mat &result){
-    cv::Scalar mean, std;
+
+    cv::Mat tmp_img;
+    img.convertTo(tmp_img, CV_32FC3, 1.0/255.0);
+
+    // image net normalization
+    cv::Scalar mean {0.485, 0.456, 0.406};
+    cv::Scalar stddev {0.229, 0.224, 0.225};
+
     std::vector<cv::Mat> channels(3);
-    cv::split(img, channels);
-    cv::meanStdDev(img, mean, std);
-    std::cout << "Mean: " << mean << "\tStd Dev: " << std << std::endl;
+    cv::split(tmp_img, channels);
     for (int c = 0; c < 3; c++){
-        channels[c] = (channels[c] - mean[c]) / std[c];
+        channels[c] = (channels[c] - mean[c]) / stddev[c];
     }
     cv::merge(channels, result);
+    cv::Mat save_normal;
+    result.convertTo(save_normal, CV_8UC3, 255.0);
+    cv::imwrite("Normalized.jpeg", save_normal);
 };
 
+
+cv::Mat preprocess_img(cv::Mat& src_im, cv::Size sz = cv::Size(224, 224)){
+    cv::Mat resized_img;
+    cv::Mat res_img;
+    cv::resize(src_im, resized_img, sz, cv::INTER_CUBIC);
+    // cv::cvtColor(resized_img, resized_img, cv::COLOR_BGRA2RGB);
+    // cv::imwrite("after_resize.jpeg", resized_img);
+    // cv::Mat final(sz.width, sz.height, CV_32F);
+    cv::Mat final;
+    normalize_img(resized_img, final);
+    cv::Mat final_save;
+    //final.convertTo(final_save, CV_8UC3, 255.0);
+    // cv::imwrite("after_preprocess.jpeg", final_save);
+    // final.convertTo(res_img, CV_32F, 1.0/255.0);
+    return final;
+};
  
 int main() {
     utility_server s;
@@ -152,27 +189,28 @@ int main() {
 
     // read image from disk
     auto img = cv::imread("../test_img_dog.jpeg", cv::IMREAD_COLOR_RGB);
-
-
     // resize image to desired model size
-    cv::Mat resized_array;
-    cv::Mat pre_process_img;
-    cv::resize(img, resized_array, cv::Size(224, 224));
-    resized_array.convertTo(pre_process_img, CV_32F, 1.0/255.0);
+    // cv::Mat resized_array;
+    // cv::Mat pre_process_img;
+    // resized_array.convertTo(pre_process_img, CV_32F, 1.0/255.0);
+    //     cv::resize(img, resized_array, cv::Size(224, 224));
+    img = preprocess_img(img);
 
     // TODO normalize image 
-    //
-
-    cv::Mat final_img;
-    normalize_img(pre_process_img, final_img);
+    // cv::Mat final_img;
+    // normalize_img(pre_process_img, final_img);
 
 
-    float *buffer = final_img.ptr<float>();
+    // float *buffer = final_img.ptr<float>();
+    float *buffer = img.ptr<float>();
 
-    std::cout << "Size: " << final_img.total() << "\t Channels: " << final_img.channels();
-    std::cout << "\n Dims: " << final_img.size << std::endl;
+    // std::cout << "Size: " << final_img.total() << "\t Channels: " << final_img.channels();
+    // std::cout << "\n Dims: " << final_img.size << std::endl;
     
-    onnx_sess.set_input_tensor(buffer, final_img.total() * final_img.channels());
+    std::cout << "Size: " << img.total() << "\t Channels: " << img.channels();
+    std::cout << "\n Dims: " << img.size << std::endl;
+    // onnx_sess.set_input_tensor(buffer, final_img.total() * final_img.channels());
+    onnx_sess.set_input_tensor(buffer, img.total() * img.channels());
     // print_image("../test_img.jpeg");
 
 
