@@ -10,7 +10,7 @@ This is part of my Cpp journey. As I continue to be a bloody beginner, the imple
 This serves as my own TODO list.
 
 ## Websocket utility server
-- [ ] send image via websocket connection to backend
+- [x] send image via websocket connection to backend
 - [ ] define ouput format, send results back
 
 ## Onnxruntime
@@ -37,3 +37,10 @@ mkdir build && cd build && cmake ..
 cmake --build .
 
 ```
+
+
+
+# YOLOv11
+classes 80
+img size: 640 x 640
+

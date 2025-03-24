@@ -21,8 +21,7 @@
 typedef websocketpp::server<websocketpp::config::asio> server;
 class utility_server;
 void outside_handler(utility_server &us, websocketpp::connection_hdl hdl, server::message_ptr msg);
-cv::Mat preprocess_img(cv::Mat& mat, cv::Size sz);
-std::ptrdiff_t onnx_run(ResNetSession& sess, cv::Mat img);
+cv::Mat preprocess_img(cv::Mat& mat, cv::Size sz, bool);
 
 class utility_server {
 public:
@@ -90,37 +89,30 @@ private:
 };
 
 // message handler used for websocket server
-void outside_handler(utility_server &us, websocketpp::connection_hdl hdl, server::message_ptr msg) {
+void outside_handler(utility_server &us, ResNetSession &sess, websocketpp::connection_hdl hdl, server::message_ptr msg) {
     // write a new message
     std::string new_msg_payload;
     if (msg->get_opcode() == websocketpp::frame::opcode::binary){
         std::vector<uchar> payload_2(msg->get_payload().begin(), msg->get_payload().end());
         cv::Mat img = cv::imdecode(payload_2, cv::IMREAD_COLOR_RGB);
-        cv::Mat new_img = preprocess_img(img, cv::Size(224,224));
+        cv::Mat new_img = preprocess_img(img, cv::Size(224,224), 1);
         if (new_img.empty()) {
             throw std::runtime_error("Failed to decode image from byte string");
         }
-        auto onnx_sess = ResNetSession();
-        auto res = onnx_run(onnx_sess, new_img);
+        auto res = sess.detect(new_img);
         std::cout << "Result: " << res << std::endl;
-        new_msg_payload = "Bytes frame. Image has size (" + std::to_string(new_img.rows) + "," +std::to_string(new_img.cols) + ") yielding result: " + std::to_string(res); // non const ref to payload
+        new_msg_payload = "Bytes frame. Image has size (" +
+            std::to_string(new_img.rows) +
+            "," + 
+            std::to_string(new_img.cols) +
+            ") yielding result: " +
+            std::to_string(res); // non const ref to payload
     } 
     else {
         new_msg_payload = "This is a text frame"; // non const ref to payload
     };
     us.send(hdl, new_msg_payload, websocketpp::frame::opcode::text);
 }
-
-
-std::ptrdiff_t onnx_run(ResNetSession& sess, cv::Mat img){
-    /*
-     * Run img in sess.
-     * */
-    float *buffer = img.ptr<float>();
-    sess.set_input_tensor(buffer, img.total() * img.channels());
-    std::ptrdiff_t res = sess.Run();
-    return res;
-};
 
 
 int print_image(const std::string fpath){
@@ -144,20 +136,28 @@ int print_image(const std::string fpath){
 };
 
 
-void normalize_img(cv::Mat &img, cv::Mat &result){
-    /* 
-     * uint8 -> float32
-     * normalize with mean and stddev
-     * */
-    cv::Mat tmp_img;
-    img.convertTo(tmp_img, CV_32FC3, 1.0/255.0);
+
+cv::Mat im_normalize(cv::Mat img){
 
     // image net normalization params
     cv::Scalar mean {0.485, 0.456, 0.406};
     cv::Scalar stddev {0.229, 0.224, 0.225};
+    cv::Mat normalized;
+    cv::subtract(img, mean, normalized);
+    cv::divide(normalized, stddev, normalized);
+    return normalized;
+}
 
+void normalize_img(cv::Mat &img, cv::Mat &result){
+    /* 
+     * normalize with mean and stddev
+     * */
+
+    // image net normalization params
+    cv::Scalar mean {0.485, 0.456, 0.406};
+    cv::Scalar stddev {0.229, 0.224, 0.225};
     std::vector<cv::Mat> channels(3);
-    cv::split(tmp_img, channels);
+    cv::split(img, channels);
     for (int c = 0; c < 3; c++){
         channels[c] = (channels[c] - mean[c]) / stddev[c];
     }
@@ -171,22 +171,32 @@ void normalize_img(cv::Mat &img, cv::Mat &result){
 };
 
 
-cv::Mat preprocess_img(cv::Mat& src_im, cv::Size sz = cv::Size(224, 224)){
+cv::Mat preprocess_img(cv::Mat& src_im, cv::Size sz = cv::Size(224, 224), bool normalize = 1){
     /* 
      * resize image with cubic interpolation, then normalize
      * */
     cv::Mat resized_img;
     cv::resize(src_im, resized_img, sz, cv::INTER_CUBIC);
     cv::Mat final;
-    normalize_img(resized_img, final);
 
-    if (DEBUG){
-        cv::imwrite("after_resize.jpeg", resized_img);
-        cv::Mat final_save;
-        final.convertTo(final_save, CV_8UC3, 255.0);
-        cv::imwrite("after_preprocess.jpeg", final_save);
+    // resize 
+    cv::Mat tmp_img;
+    resized_img.convertTo(tmp_img, CV_32FC3, 1.0/255.0);
+
+    if (normalize){
+        // normalize_img(tmp_img, final);
+        final = im_normalize(tmp_img);
+
+        if (DEBUG){
+            cv::imwrite("after_resize.jpeg", resized_img);
+            cv::Mat final_save;
+            final.convertTo(final_save, CV_8UC3, 255.0);
+            cv::imwrite("after_preprocess.jpeg", final_save);
+        }
+        return final;
     }
-    return final;
+
+    else return tmp_img;
 };
  
 int main() {
@@ -197,16 +207,16 @@ int main() {
 
     // read image from disk & preprocess image
     auto img = cv::imread("../test_img_dog.jpeg", cv::IMREAD_COLOR_RGB);
-    img = preprocess_img(img);
+    img = preprocess_img(img, cv::Size(224, 224), 1);
     std::cout << "Size: " << img.total() << "\t Channels: " << img.channels();
     std::cout << "\n Dims: " << img.size << std::endl;
 
     // run model on image
-    auto res = onnx_run(onnx_sess, img);
+    auto res = onnx_sess.detect(img);
     std::cout << "Result: " << res << std::endl;
 
     // set message handler for server & run server
-    s.set_message_handler([&s](websocketpp::connection_hdl hdl, server::message_ptr msg){outside_handler(s, hdl, msg);});
+    s.set_message_handler([&s, &onnx_sess](websocketpp::connection_hdl hdl, server::message_ptr msg){outside_handler(s, onnx_sess,hdl, msg);});
     s.run();
     return 0;
 }

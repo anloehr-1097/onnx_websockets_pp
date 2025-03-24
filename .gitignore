@@ -2,6 +2,7 @@ build/*
 .cache/*
 onnxruntime/*
 *.onnx
+*.pt
 *.png
 *.jpeg
 *.jpg
