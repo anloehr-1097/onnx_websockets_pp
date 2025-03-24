@@ -1,7 +1,9 @@
 #include "websocketpp/common/connection_hdl.hpp"
 #include "websocketpp/frame.hpp"
+#include <cstddef>
 #include <opencv2/core.hpp>
 #include <opencv2/core/base.hpp>
+#include <opencv2/core/hal/interface.h>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -91,9 +93,14 @@ private:
 void outside_handler(utility_server &us, websocketpp::connection_hdl hdl, server::message_ptr msg) {
     // write a new message
     std::string new_msg_payload;
-    if (msg->get_opcode() == websocketpp::frame::opcode::binary)
+    if (msg->get_opcode() == websocketpp::frame::opcode::binary){
         new_msg_payload = "This is a bytes frame"; // non const ref to payload
-    
+        std::vector<uchar> payload_2(msg->get_payload().begin(), msg->get_payload().end());
+        cv::Mat img = cv::imdecode(payload_2, cv::IMREAD_UNCHANGED);
+         if (img.empty()) {
+                throw std::runtime_error("Failed to decode image from byte string");
+        }
+    } 
     else {
         new_msg_payload = "This is a text frame"; // non const ref to payload
     };
@@ -173,6 +180,6 @@ int main() {
     std::cout << "Result: " << res << std::endl;
 
     s.set_message_handler([&s](websocketpp::connection_hdl hdl, server::message_ptr msg){outside_handler(s, hdl, msg);});
-    // s.run();
+    s.run();
     return 0;
 }
