@@ -27,7 +27,6 @@ static void softmax(T& input) {
 }
 
 
-
 struct ResNetSession {
     // sample onnx inference session
     // member definition
@@ -131,9 +130,6 @@ struct ResNetSession {
         session_.Run(run_options, input_names, &input_tensor_, 1, output_names, &output_tensor_, 1);
 
         softmax(results_);
-        for (size_t i = 0; i < 10; i++){
-            std::cout << results_[i] << std::endl;
-        }
         result_ = std::distance(results_.begin(), std::max_element(results_.begin(), results_.end()));
         return result_;
     }
@@ -148,5 +144,3 @@ private:
   Ort::Value output_tensor_{nullptr};
   std::array<int64_t, 2> output_shape_{1, 1000};
 };
-
-

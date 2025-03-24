@@ -5,7 +5,7 @@ from pathlib import Path
 from websockets.sync.client import connect
 from PIL import Image
 
-img_path: Path = Path("test_img.jpeg")
+img_path: Path = Path("test_img_dog.jpeg")
 img = Image.open(img_path).convert("RGB")
 
 
