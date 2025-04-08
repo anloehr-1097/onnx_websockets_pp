@@ -17,14 +17,21 @@ This serves as my own TODO list.
 - [ ] interface __inference : image -> result__ accepting arbitrary images
 - [ ] __class InputHandler__ capable of receiving and preprocessing image
 - [ ] the RUN method of the onnx_sess should be of type __Run: images -> result__
+- [ ] write postprocessor to handle outputs of the model
 
+## model
+- [ ] integrate YOLOv11 instead of random model used to date
 # Status
 First baby steps have been taken toward the goal, but a lot of work remains to be done.
+
+
+## GTest include and write tests
 
 # Dependencies
 - OpenCV
 - OnnxRuntime
 - WebSocketpp
+- GTest
 
 # Build
 

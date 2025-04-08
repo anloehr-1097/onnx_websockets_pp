@@ -1,6 +1,7 @@
 #include "websocketpp/common/connection_hdl.hpp"
 #include "websocketpp/frame.hpp"
 #include <cstddef>
+#include <filesystem>
 #include <opencv2/core.hpp>
 #include <opencv2/core/base.hpp>
 #include <opencv2/core/hal/interface.h>
@@ -12,9 +13,10 @@
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 #include <functional>
-// #include <onnxruntime_cxx_api.h>
+#include <onnxruntime_cxx_api.h>
 #include "inference.hpp"
-
+#include "config.h"
+#include "debug_utils.h"
 
 #define DEBUG 1
 
@@ -60,13 +62,10 @@ public:
         m_endpoint.set_message_handler(func);
     };
  
-    void run() {
-        // Listen on port 9002
-        m_endpoint.listen(9002);
- 
+    void run(const unsigned int listen_port) {
+        m_endpoint.listen(listen_port);
         // Queues a connection accept operation
         m_endpoint.start_accept();
- 
         // Start the Asio io_service run loop
         m_endpoint.run();
     }
@@ -113,6 +112,41 @@ void outside_handler(utility_server &us, ResNetSession &sess, websocketpp::conne
     };
     us.send(hdl, new_msg_payload, websocketpp::frame::opcode::text);
 }
+
+
+void yolo_handler(utility_server &us, Yolov11Session &sess, websocketpp::connection_hdl hdl, server::message_ptr msg) {
+    // write a new message
+    std::string new_msg_payload;
+    if (msg->get_opcode() == websocketpp::frame::opcode::binary){
+        std::vector<uchar> payload_2(msg->get_payload().begin(), msg->get_payload().end());
+        cv::Mat img = cv::imdecode(payload_2, cv::IMREAD_COLOR_RGB);
+        cv::Mat new_img = preprocess_img(img, cv::Size(640, 640), 1);
+        if (new_img.empty()) {
+            throw std::runtime_error("Failed to decode image from byte string");
+        }
+
+
+        std::vector<float> t_data(640 * 640 * 3);
+        std::memcpy(t_data.data(), img.ptr<float>(), t_data.size());
+
+        sess.set_input_tensor(t_data);
+        auto onnx_out_tens = sess.run();
+        auto res = sess.postprocess(std::move(onnx_out_tens));
+        //     auto res = sess.detect(new_img);
+        std::cout << "Result: " << res << std::endl;
+        new_msg_payload = "Bytes frame. Image has size (" +
+            std::to_string(new_img.rows) +
+            "," + 
+            std::to_string(new_img.cols) +
+            ") yielding result: " +
+            std::to_string(res); // non const ref to payload
+    } 
+    else {
+        new_msg_payload = "This is a text frame"; // non const ref to payload
+    };
+    us.send(hdl, new_msg_payload, websocketpp::frame::opcode::text);
+}
+
 
 
 int print_image(const std::string fpath){
@@ -171,7 +205,7 @@ void normalize_img(cv::Mat &img, cv::Mat &result){
 };
 
 
-cv::Mat preprocess_img(cv::Mat& src_im, cv::Size sz = cv::Size(224, 224), bool normalize = 1){
+cv::Mat preprocess_img(cv::Mat& src_im, cv::Size sz = cv::Size(224, 224), bool normalize = 0){
     /* 
      * resize image with cubic interpolation, then normalize
      * */
@@ -182,41 +216,67 @@ cv::Mat preprocess_img(cv::Mat& src_im, cv::Size sz = cv::Size(224, 224), bool n
     // resize 
     cv::Mat tmp_img;
     resized_img.convertTo(tmp_img, CV_32FC3, 1.0/255.0);
+    auto size = resized_img.size();
+    std::cout << "Size:" << size << std::endl;
+
 
     if (normalize){
         // normalize_img(tmp_img, final);
         final = im_normalize(tmp_img);
+        cv::Mat final_save;
+        cv::Mat final_return;
+        // final.convertTo(final_save, CV_8UC3, 255.0);
+        final_return = final * 255.0;
+        final_return.convertTo(final_save, CV_8UC3);
+
+
 
         if (DEBUG){
             cv::imwrite("after_resize.jpeg", resized_img);
-            cv::Mat final_save;
-            final.convertTo(final_save, CV_8UC3, 255.0);
             cv::imwrite("after_preprocess.jpeg", final_save);
         }
-        return final;
+        // return final;
+        return final_return;
     }
-
     else return tmp_img;
 };
  
 int main() {
     // create websocket server & onnx session
     utility_server s;
-    auto onnx_sess = ResNetSession();
-    onnx_sess.getInputAndOutputNames();
+
+    auto fp = std::filesystem::path {"yolo11x_obb.onnx"};
+    auto onnx_sess = Yolov11Session(fp);
+    onnx_sess.get_input_output_names();
+    onnx_sess.get_output_type_info();
+
+    // auto onnx_sess = ResNetSession();
+    // onnx_sess.getInputAndOutputNames();
 
     // read image from disk & preprocess image
-    auto img = cv::imread("../test_img_dog.jpeg", cv::IMREAD_COLOR_RGB);
-    img = preprocess_img(img, cv::Size(224, 224), 1);
-    std::cout << "Size: " << img.total() << "\t Channels: " << img.channels();
-    std::cout << "\n Dims: " << img.size << std::endl;
+    auto img = cv::imread("../cat.jpeg", cv::IMREAD_COLOR_RGB);
+    cv::Mat resized_img;
+    // cv::resize(img, resized_img, cv::Size(640, 640), cv::INTER_CUBIC);
+    img = preprocess_img(img, cv::Size(640, 640), 0);
+    // std::cout << "Size: " << resized_img.total() << "\t Channels: " << resized_img.channels();
+    // std::cout << "\n Dims: " << resized_img.size << std::endl;
+    // cv::imwrite("resized_img.jpeg", resized_img);
 
+    cv::Mat intermediate_before_read;
+    img.convertTo(intermediate_before_read, CV_8UC3, 255.0);
+    save_image(intermediate_before_read, "intermediate_before_read.jpeg");
+    save_image(img, "img_after_conver.jpeg");
     // run model on image
-    auto res = onnx_sess.detect(img);
+    onnx_sess.read_input(img);
+    auto onnx_out_tens = onnx_sess.run();
+
+    auto res = onnx_sess.postprocess(std::move(onnx_out_tens));
+    // auto res = onnx_sess.detect(img);
     std::cout << "Result: " << res << std::endl;
 
     // set message handler for server & run server
-    s.set_message_handler([&s, &onnx_sess](websocketpp::connection_hdl hdl, server::message_ptr msg){outside_handler(s, onnx_sess,hdl, msg);});
-    s.run();
+    // s.set_message_handler([&s, &onnx_sess](websocketpp::connection_hdl hdl, server::message_ptr msg){outside_handler(s, onnx_sess,hdl, msg);});
+    s.set_message_handler([&s, &onnx_sess](websocketpp::connection_hdl hdl, server::message_ptr msg){yolo_handler(s, onnx_sess,hdl, msg);});
+    s.run(listen_port);
     return 0;
 }
