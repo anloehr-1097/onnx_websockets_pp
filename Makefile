@@ -1,7 +1,10 @@
-build:
+build-project:
 	echo "Building project."
-	cd build && cmake .
+	cd build && make
 
+prep:
+	echo "Prep cache."
+	mkdir build && cd build && cmake ..
 clean:
 	echo "Cleaning build dir."
 	rm -rf build

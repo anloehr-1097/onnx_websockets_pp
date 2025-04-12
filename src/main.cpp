@@ -1,4 +1,4 @@
-#include "onnxruntime_c_api.h"
+// #include "onnxruntime_c_api.h"
 #include "websocketpp/common/connection_hdl.hpp"
 #include "websocketpp/frame.hpp"
 #include <cstddef>
@@ -14,8 +14,8 @@
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 #include <functional>
-#include <onnxruntime_cxx_api.h>
-#include "inference.hpp"
+// #include <onnxruntime_cxx_api.h>
+#include "OnnxInferLib/inference.h"
 #include "config.h"
 #include "debug_utils.h"
 
@@ -89,30 +89,30 @@ private:
 };
 
 // message handler used for websocket server
-void outside_handler(utility_server &us, ResNetSession &sess, websocketpp::connection_hdl hdl, server::message_ptr msg) {
-    // write a new message
-    std::string new_msg_payload;
-    if (msg->get_opcode() == websocketpp::frame::opcode::binary){
-        std::vector<uchar> payload_2(msg->get_payload().begin(), msg->get_payload().end());
-        cv::Mat img = cv::imdecode(payload_2, cv::IMREAD_COLOR_RGB);
-        cv::Mat new_img = preprocess_img(img, cv::Size(224,224), 1);
-        if (new_img.empty()) {
-            throw std::runtime_error("Failed to decode image from byte string");
-        }
-        auto res = sess.detect(new_img);
-        std::cout << "Result: " << res << std::endl;
-        new_msg_payload = "Bytes frame. Image has size (" +
-            std::to_string(new_img.rows) +
-            "," + 
-            std::to_string(new_img.cols) +
-            ") yielding result: " +
-            std::to_string(res); // non const ref to payload
-    } 
-    else {
-        new_msg_payload = "This is a text frame"; // non const ref to payload
-    };
-    us.send(hdl, new_msg_payload, websocketpp::frame::opcode::text);
-}
+// void outside_handler(utility_server &us, resnetsession &sess, websocketpp::connection_hdl hdl, server::message_ptr msg) {
+//     // write a new message
+//     std::string new_msg_payload;
+//     if (msg->get_opcode() == websocketpp::frame::opcode::binary){
+//         std::vector<uchar> payload_2(msg->get_payload().begin(), msg->get_payload().end());
+//         cv::Mat img = cv::imdecode(payload_2, cv::IMREAD_COLOR_RGB);
+//         cv::Mat new_img = preprocess_img(img, cv::Size(224,224), 1);
+//         if (new_img.empty()) {
+//             throw std::runtime_error("Failed to decode image from byte string");
+//         }
+//         auto res = sess.detect(new_img);
+//         std::cout << "Result: " << res << std::endl;
+//         new_msg_payload = "Bytes frame. Image has size (" +
+//             std::to_string(new_img.rows) +
+//             "," + 
+//             std::to_string(new_img.cols) +
+//             ") yielding result: " +
+//             std::to_string(res); // non const ref to payload
+//     } 
+//     else {
+//         new_msg_payload = "This is a text frame"; // non const ref to payload
+//     };
+//     us.send(hdl, new_msg_payload, websocketpp::frame::opcode::text);
+// }
 
 
 void yolo_handler(utility_server &us, Yolov11Session &sess, websocketpp::connection_hdl hdl, server::message_ptr msg) {
@@ -126,17 +126,9 @@ void yolo_handler(utility_server &us, Yolov11Session &sess, websocketpp::connect
             throw std::runtime_error("Failed to decode image from byte string");
         }
 
-        Ort::MemoryInfo mem_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeDefault);
-        static constexpr std::array<int64_t, 4> input_shape {1, 3, 640, 640};
-        Ort::Value inp_tens = Ort::Value::CreateTensor(
-            mem_info,
-            new_img.ptr<float>(),
-            new_img.total(),
-            input_shape.data(),
-            input_shape.size()
-        );
-            
-        auto onnx_out_tens = sess.run(inp_tens);
+        sess.set_input_image(new_img);
+        // sess.read_input_image(new_img);
+        auto onnx_out_tens = sess.detect();
         auto res = sess.postprocess(onnx_out_tens);
         //     auto res = sess.detect(new_img);
         std::cout << "Result: " << res << std::endl;
@@ -248,44 +240,17 @@ cv::Mat preprocess_img(cv::Mat& src_im, cv::Size sz = cv::Size(224, 224), bool n
 int main() {
     // create websocket server & onnx session
     utility_server s;
-
-    auto fp = std::filesystem::path {"yolo11x_obb.onnx"};
+    auto fp = std::filesystem::path {"/Users/anlhr/Projects/onnx_websockets/models/yolo11x_obb.onnx"};
     auto onnx_sess = Yolov11Session(fp);
     onnx_sess.get_input_output_names();
     onnx_sess.get_output_type_info();
-
-    // auto onnx_sess = ResNetSession();
-    // onnx_sess.getInputAndOutputNames();
-
     // read image from disk & preprocess image
-    auto img = cv::imread("../test_img_broccoli.jpg", cv::IMREAD_COLOR_RGB);
+    auto img = cv::imread("/Users/anlhr/Projects/onnx_websockets/images/test_img_broccoli.jpg", cv::IMREAD_COLOR_RGB);
     cv::Mat resized_img;
-    // cv::resize(img, resized_img, cv::Size(640, 640), cv::INTER_CUBIC);
     img = preprocess_img(img, cv::Size(640, 640), 0);
-    // std::cout << "Size: " << resized_img.total() << "\t Channels: " << resized_img.channels();
-    // std::cout << "\n Dims: " << resized_img.size << std::endl;
-    // cv::imwrite("resized_img.jpeg", resized_img);
-
-    // cv::Mat intermediate_before_read;
-    // img.convertTo(intermediate_before_read, CV_8UC3, 255.0);
-    // save_image(intermediate_before_read, "intermediate_before_read.jpeg");
-    // save_image(img, "img_after_conver.jpeg");
-    // run model on image
-    //
-    //
     assert(img.type() == CV_32FC3 && "Image type must be CV_32FC3");
     assert(img.isContinuous() && "Image must be in contiguous memory");
-    std::vector<float> buffer(img.total() * img.channels());  
-    // cv::dnn::blobFromImage(img, nchw, 1.0, cv::Size(640,640), cv::Scalar(), false, false);  // HWC → NCHW
-    // std::vector<float> safe_buffer(img.total() * img.channels());
-    // std::memcpy(safe_buffer.data(), img.ptr<float>(), safe_buffer.size() * sizeof(float));
     onnx_sess.set_input_image(img);
-    cv::Mat nchw;
-    cv::dnn::blobFromImage(img, nchw, 1.0, cv::Size(640,640), cv::Scalar(), false, false);  // HWC → NCHW
-    std::vector<float> safe_buffer(nchw.total());
-    std::memcpy(safe_buffer.data(), nchw.ptr<float>(), safe_buffer.size() * sizeof(float));
-    Ort::Value inp_tens = onnx_sess.read_input_image(safe_buffer);
-    // auto onnx_out_tens = onnx_sess.run(inp_tens);
     auto onnx_out_tens = onnx_sess.detect();
     auto res = onnx_sess.postprocess(onnx_out_tens);
     std::cout << "Result: " << res << std::endl;

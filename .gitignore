@@ -1,12 +1,12 @@
 build/*
 .cache/*
-onnxruntime/*
+src/OnnxInferLib/onnxruntime/*
 *.onnx
 *.pt
 *.png
 *.jpeg
 *.jpg
-websocketpp/
+src/websocketpp/
 
 
 *~
