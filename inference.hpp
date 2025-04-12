@@ -103,7 +103,7 @@ struct Yolov11Session {
 private:
     Ort::Env env;
     Ort::Session session {nullptr};
-    std::array<int64_t, 3> output_shape {1, 5, 8400};
+    std::array<int64_t, 3> output_shape;  // {1, 5, 8400};
 
 public:
     // Yolov11 inference session
@@ -111,7 +111,9 @@ public:
     static const int height = CustOnnxConfig::input_height();
     static const int channels = CustOnnxConfig::input_channels();
     static constexpr std::array<int64_t, 4> input_shape {1, 3, width, height};
-    std::array<float, width * height * channels> input_image{};
+
+    cv::Mat input_image{};
+    // std::array<float, width * height * channels> input_image{};
     Ort::MemoryInfo memory_info = get_mem_info(CustOnnxConfig::device());
     std::array<float, CustOnnxConfig::output_classes()> results{};
     Ort::Value input_tensor {nullptr};
@@ -137,6 +139,16 @@ public:
         //                                          output_shape.data(), output_shape.size());
     }
 
+    Ort::Value read_input_image(std::vector<float> &vec){
+        Ort::Value inp_tens = Ort::Value::CreateTensor(
+            memory_info,
+            vec.data(),
+            vec.size(),
+            input_shape.data(),
+            input_shape.size()
+        );
+        return inp_tens;
+    }
     // void read_input(cv::Mat &img){
     //
     //     float *buffer = img.ptr<float>();
@@ -150,7 +162,9 @@ public:
     //     );
     // };
 
-    void set_input_tensor(const std::vector<float> &vec){};
+    void set_input_image(cv::Mat &img){
+        cv::dnn::blobFromImage(img, input_image, 1.0, cv::Size(640, 640), cv::Scalar(), false, false);
+    };
 
     // Ort::Value read_input(const cv::Mat &img) {  
     // //     // Allocate a buffer that ONNX Runtime will manage  

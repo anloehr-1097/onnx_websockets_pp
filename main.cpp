@@ -213,17 +213,16 @@ void normalize_img(cv::Mat &img, cv::Mat &result){
 cv::Mat preprocess_img(cv::Mat& src_im, cv::Size sz = cv::Size(224, 224), bool normalize = 0){
     /* 
      * resize image with cubic interpolation, then normalize
-     * */
+     */
+
+    // resize 
     cv::Mat resized_img;
     cv::resize(src_im, resized_img, sz, cv::INTER_CUBIC);
     cv::Mat final;
 
-    // resize 
     cv::Mat tmp_img;
     resized_img.convertTo(tmp_img, CV_32FC3, 1.0/255.0);
-    auto size = resized_img.size();
-    std::cout << "Size:" << size << std::endl;
-
+    // auto size = resized_img.size();
 
     if (normalize){
         // normalize_img(tmp_img, final);
@@ -259,7 +258,7 @@ int main() {
     // onnx_sess.getInputAndOutputNames();
 
     // read image from disk & preprocess image
-    auto img = cv::imread("../cat.jpeg", cv::IMREAD_COLOR_RGB);
+    auto img = cv::imread("../test_img_broccoli.jpg", cv::IMREAD_COLOR_RGB);
     cv::Mat resized_img;
     // cv::resize(img, resized_img, cv::Size(640, 640), cv::INTER_CUBIC);
     img = preprocess_img(img, cv::Size(640, 640), 0);
@@ -267,39 +266,30 @@ int main() {
     // std::cout << "\n Dims: " << resized_img.size << std::endl;
     // cv::imwrite("resized_img.jpeg", resized_img);
 
-    cv::Mat intermediate_before_read;
-    img.convertTo(intermediate_before_read, CV_8UC3, 255.0);
-    save_image(intermediate_before_read, "intermediate_before_read.jpeg");
-    save_image(img, "img_after_conver.jpeg");
+    // cv::Mat intermediate_before_read;
+    // img.convertTo(intermediate_before_read, CV_8UC3, 255.0);
+    // save_image(intermediate_before_read, "intermediate_before_read.jpeg");
+    // save_image(img, "img_after_conver.jpeg");
     // run model on image
     //
     //
     assert(img.type() == CV_32FC3 && "Image type must be CV_32FC3");
     assert(img.isContinuous() && "Image must be in contiguous memory");
     std::vector<float> buffer(img.total() * img.channels());  
+    // cv::dnn::blobFromImage(img, nchw, 1.0, cv::Size(640,640), cv::Scalar(), false, false);  // HWC → NCHW
+    // std::vector<float> safe_buffer(img.total() * img.channels());
+    // std::memcpy(safe_buffer.data(), img.ptr<float>(), safe_buffer.size() * sizeof(float));
+    onnx_sess.set_input_image(img);
     cv::Mat nchw;
     cv::dnn::blobFromImage(img, nchw, 1.0, cv::Size(640,640), cv::Scalar(), false, false);  // HWC → NCHW
     std::vector<float> safe_buffer(nchw.total());
     std::memcpy(safe_buffer.data(), nchw.ptr<float>(), safe_buffer.size() * sizeof(float));
-
-    Ort::MemoryInfo mem_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeDefault);
-    static constexpr std::array<int64_t, 4> input_shape {1, 3, 640, 640};
-    Ort::Value inp_tens = Ort::Value::CreateTensor(
-        mem_info,
-        safe_buffer.data(),
-        safe_buffer.size(),
-        input_shape.data(),
-        input_shape.size()
-    );
-    float* tensor_data = inp_tens.GetTensorMutableData<float>();
+    Ort::Value inp_tens = onnx_sess.read_input_image(safe_buffer);
     auto onnx_out_tens = onnx_sess.run(inp_tens);
-    float* out_data = onnx_out_tens[0].GetTensorMutableData<float>();
-
-
     auto res = onnx_sess.postprocess(onnx_out_tens);
-    // auto res = onnx_sess.detect(img);
     std::cout << "Result: " << res << std::endl;
 
+    // -- server related logic --
     // set message handler for server & run server
     // s.set_message_handler([&s, &onnx_sess](websocketpp::connection_hdl hdl, server::message_ptr msg){outside_handler(s, onnx_sess,hdl, msg);});
     s.set_message_handler([&s, &onnx_sess](websocketpp::connection_hdl hdl, server::message_ptr msg){yolo_handler(s, onnx_sess,hdl, msg);});
