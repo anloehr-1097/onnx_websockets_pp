@@ -166,6 +166,25 @@ public:
         cv::dnn::blobFromImage(img, input_image, 1.0, cv::Size(640, 640), cv::Scalar(), false, false);
     };
 
+
+    std::vector<Ort::Value> detect(){
+        // TODO find out how to define these globally 
+        const char* input_names[] = {CustOnnxConfig::input_names()};
+        const char* output_names[] = {CustOnnxConfig::output_names()};
+        Ort::RunOptions run_options;
+        Ort::Value input_tens = Ort::Value::CreateTensor<float>(
+            memory_info,
+            input_image.ptr<float>(),
+            input_image.total(),
+            input_shape.data(),
+            input_shape.size()
+        );
+        auto out_tens = session.Run(run_options, input_names, &input_tens, 1, output_names, 1);
+        // delete *input_names;
+        // delete *output_names;
+        return out_tens;
+    };
+
     // Ort::Value read_input(const cv::Mat &img) {  
     // //     // Allocate a buffer that ONNX Runtime will manage  
     //

@@ -285,7 +285,8 @@ int main() {
     std::vector<float> safe_buffer(nchw.total());
     std::memcpy(safe_buffer.data(), nchw.ptr<float>(), safe_buffer.size() * sizeof(float));
     Ort::Value inp_tens = onnx_sess.read_input_image(safe_buffer);
-    auto onnx_out_tens = onnx_sess.run(inp_tens);
+    // auto onnx_out_tens = onnx_sess.run(inp_tens);
+    auto onnx_out_tens = onnx_sess.detect();
     auto res = onnx_sess.postprocess(onnx_out_tens);
     std::cout << "Result: " << res << std::endl;
 
