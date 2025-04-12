@@ -97,5 +97,6 @@ target_link_libraries(main PRIVATE pthread libonnxruntime.dylib ${OpenCV_LIBS})
 # install(TARGETS np_interop DESTINATION .)
 
 
+add_subdirectory(tests)
 
 
