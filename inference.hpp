@@ -1,5 +1,4 @@
 
-#include "onnxruntime_c_api.h"
 #include <algorithm>
 #include <cassert>
 #include <filesystem>
@@ -11,8 +10,9 @@
 #include <iterator>
 #include <memory>
 #include <numeric>
-#include<onnxruntime_cxx_api.h>
+#include <onnxruntime_cxx_api.h>
 #include <opencv2/core.hpp>
+#include <opencv2/core/hal/interface.h>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
@@ -152,20 +152,23 @@ public:
 
     void set_input_tensor(const std::vector<float> &vec){};
 
-    Ort::Value read_input(const cv::Mat& img) {  
-        // Allocate a buffer that ONNX Runtime will manage  
-        std::vector<float> buffer(img.total() * img.channels());  
-        std::memcpy(buffer.data(), img.ptr<float>(), buffer.size() * sizeof(float));  
-
-        auto inp_tens = Ort::Value::CreateTensor<float>(  
-            memory_info,  
-            buffer.data(),  // ONNX Runtime will copy this data  
-            buffer.size(),  
-            input_shape.data(),  
-            input_shape.size()  
-        );  
-        return inp_tens;
-    }  
+    // Ort::Value read_input(const cv::Mat &img) {  
+    // //     // Allocate a buffer that ONNX Runtime will manage  
+    //
+    //     Ort::MemoryInfo mem_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeDefault);
+    //
+    //     Ort::Value in = Ort::Value::CreateTensor<float>(
+    //         memory_info,
+    //         img.ptr<float>(),
+    //         img.total(),
+    //         input_shape.data(),
+    //         input_shape.size()
+    //     );
+    //
+    //
+    //     float* tensor_data = in.GetTensorMutableData<float>();
+    //     return in;
+    // };  
 
 
     void get_input_output_names(){
@@ -232,17 +235,17 @@ ptrdiff_t postprocess(std::vector<Ort::Value>& output){
             int dim1 = shape.at(1);
             int dim2 = shape.at(2);
             
-            std::vector<float> transposed(num_elements);
-            for (int i = 0; i < dim1; ++i) {
-                for (int j = 0; j < dim2; ++j) {
-                    transposed[i * dim2 + j] = 
-                        float_data[j * dim1 + i];
-                }
-            }
-            
-            for (auto k: transposed){
-
-            }
+            // std::vector<float> transposed(num_elements);
+            // for (int i = 0; i < dim1; ++i) {
+            //     for (int j = 0; j < dim2; ++j) {
+            //         transposed[i * dim2 + j] = 
+            //             float_data[j * dim1 + i];
+            //     }
+            // }
+            // 
+            // for (auto k: transposed){
+            //
+            // }
 
 
             // for (int i=0; i < 8400 ; ++i){
@@ -292,8 +295,9 @@ ptrdiff_t postprocess(std::vector<Ort::Value>& output){
             //     };
             // }
             // std::cout << "Max score: "<< scores.at(*std::max_element(scores.begin(), scores.end()));
+            std::cout << "Confidence: " << float_data[4] << "Class: " << float_data[5] << std::endl;
+            return float_data[5];
         };
-        return 1;
     };
 
 // ptrdiff_t postprocess(std::vector<Ort::Value> output){

@@ -1,3 +1,4 @@
+#include "onnxruntime_c_api.h"
 #include "websocketpp/common/connection_hdl.hpp"
 #include "websocketpp/frame.hpp"
 #include <cstddef>
@@ -125,8 +126,16 @@ void yolo_handler(utility_server &us, Yolov11Session &sess, websocketpp::connect
             throw std::runtime_error("Failed to decode image from byte string");
         }
 
-
-        auto inp_tens = sess.read_input(new_img);
+        Ort::MemoryInfo mem_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeDefault);
+        static constexpr std::array<int64_t, 4> input_shape {1, 3, 640, 640};
+        Ort::Value inp_tens = Ort::Value::CreateTensor(
+            mem_info,
+            new_img.ptr<float>(),
+            new_img.total(),
+            input_shape.data(),
+            input_shape.size()
+        );
+            
         auto onnx_out_tens = sess.run(inp_tens);
         auto res = sess.postprocess(onnx_out_tens);
         //     auto res = sess.detect(new_img);
@@ -201,7 +210,6 @@ void normalize_img(cv::Mat &img, cv::Mat &result){
     cv::imwrite("Normalized.jpeg", save_normal);
 };
 
-
 cv::Mat preprocess_img(cv::Mat& src_im, cv::Size sz = cv::Size(224, 224), bool normalize = 0){
     /* 
      * resize image with cubic interpolation, then normalize
@@ -264,8 +272,29 @@ int main() {
     save_image(intermediate_before_read, "intermediate_before_read.jpeg");
     save_image(img, "img_after_conver.jpeg");
     // run model on image
-    auto inp_tens = onnx_sess.read_input(img);
+    //
+    //
+    assert(img.type() == CV_32FC3 && "Image type must be CV_32FC3");
+    assert(img.isContinuous() && "Image must be in contiguous memory");
+    std::vector<float> buffer(img.total() * img.channels());  
+    cv::Mat nchw;
+    cv::dnn::blobFromImage(img, nchw, 1.0, cv::Size(640,640), cv::Scalar(), false, false);  // HWC → NCHW
+    std::vector<float> safe_buffer(nchw.total());
+    std::memcpy(safe_buffer.data(), nchw.ptr<float>(), safe_buffer.size() * sizeof(float));
+
+    Ort::MemoryInfo mem_info = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeDefault);
+    static constexpr std::array<int64_t, 4> input_shape {1, 3, 640, 640};
+    Ort::Value inp_tens = Ort::Value::CreateTensor(
+        mem_info,
+        safe_buffer.data(),
+        safe_buffer.size(),
+        input_shape.data(),
+        input_shape.size()
+    );
+    float* tensor_data = inp_tens.GetTensorMutableData<float>();
     auto onnx_out_tens = onnx_sess.run(inp_tens);
+    float* out_data = onnx_out_tens[0].GetTensorMutableData<float>();
+
 
     auto res = onnx_sess.postprocess(onnx_out_tens);
     // auto res = onnx_sess.detect(img);
