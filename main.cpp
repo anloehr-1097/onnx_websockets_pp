@@ -126,12 +126,9 @@ void yolo_handler(utility_server &us, Yolov11Session &sess, websocketpp::connect
         }
 
 
-        std::vector<float> t_data(640 * 640 * 3);
-        std::memcpy(t_data.data(), img.ptr<float>(), t_data.size());
-
-        sess.set_input_tensor(t_data);
-        auto onnx_out_tens = sess.run();
-        auto res = sess.postprocess(std::move(onnx_out_tens));
+        auto inp_tens = sess.read_input(new_img);
+        auto onnx_out_tens = sess.run(inp_tens);
+        auto res = sess.postprocess(onnx_out_tens);
         //     auto res = sess.detect(new_img);
         std::cout << "Result: " << res << std::endl;
         new_msg_payload = "Bytes frame. Image has size (" +
@@ -267,10 +264,10 @@ int main() {
     save_image(intermediate_before_read, "intermediate_before_read.jpeg");
     save_image(img, "img_after_conver.jpeg");
     // run model on image
-    onnx_sess.read_input(img);
-    auto onnx_out_tens = onnx_sess.run();
+    auto inp_tens = onnx_sess.read_input(img);
+    auto onnx_out_tens = onnx_sess.run(inp_tens);
 
-    auto res = onnx_sess.postprocess(std::move(onnx_out_tens));
+    auto res = onnx_sess.postprocess(onnx_out_tens);
     // auto res = onnx_sess.detect(img);
     std::cout << "Result: " << res << std::endl;
 

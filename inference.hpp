@@ -152,18 +152,19 @@ public:
 
     void set_input_tensor(const std::vector<float> &vec){};
 
-    void read_input(const cv::Mat& img) {  
+    Ort::Value read_input(const cv::Mat& img) {  
         // Allocate a buffer that ONNX Runtime will manage  
         std::vector<float> buffer(img.total() * img.channels());  
         std::memcpy(buffer.data(), img.ptr<float>(), buffer.size() * sizeof(float));  
 
-        input_tensor = Ort::Value::CreateTensor<float>(  
+        auto inp_tens = Ort::Value::CreateTensor<float>(  
             memory_info,  
             buffer.data(),  // ONNX Runtime will copy this data  
             buffer.size(),  
             input_shape.data(),  
             input_shape.size()  
         );  
+        return inp_tens;
     }  
 
 
@@ -197,25 +198,23 @@ public:
         std::cout << "type: " << ti.GetTensorTypeAndShapeInfo().GetElementType() << std::endl;
     };
 
-    std::vector<Ort::Value> run(){
+    std::vector<Ort::Value> run(Ort::Value &inp_tens){
         // TODO find out how to define these globally 
         const char* input_names[] = {CustOnnxConfig::input_names()};
         const char* output_names[] = {CustOnnxConfig::output_names()};
         Ort::RunOptions run_options;
-        assert(input_tensor.IsTensor());
-        auto out_tens = session.Run(run_options, input_names, &input_tensor, 1, output_names, 1);
+        auto out_tens = session.Run(run_options, input_names, &inp_tens, 1, output_names, 1);
         // delete *input_names;
         // delete *output_names;
         return out_tens;
     };
 
 
-ptrdiff_t postprocess(std::vector<Ort::Value> output){
+ptrdiff_t postprocess(std::vector<Ort::Value>& output){
 
-        Ort::Value out = std::move(output[0]);
         // Get the shape & data type of the tensor
-        auto shape = out.GetTensorTypeAndShapeInfo().GetShape();
-        ONNXTensorElementDataType type = out.GetTensorTypeAndShapeInfo().GetElementType();
+        auto shape = output[0].GetTensorTypeAndShapeInfo().GetShape();
+        ONNXTensorElementDataType type = output[0].GetTensorTypeAndShapeInfo().GetElementType();
 
         std::cout << "shape: ( ";
         for (int64_t s: shape){
@@ -224,7 +223,7 @@ ptrdiff_t postprocess(std::vector<Ort::Value> output){
         std::cout << ")" << std::endl;
         std::cout << "Type: " << type << std::endl;
 
-        const void* raw_data = out.GetTensorData<void>();
+        const void* raw_data = output[0].GetTensorData<void>();
         if (type == ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT) {
             const float* float_data = static_cast<const float*>(raw_data);
             size_t num_elements = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<size_t>());
