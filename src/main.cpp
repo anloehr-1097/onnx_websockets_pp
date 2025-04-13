@@ -1,6 +1,8 @@
 #include "websocketpp/common/connection_hdl.hpp"
 #include "websocketpp/frame.hpp"
+#include <cctype>
 #include <cstddef>
+#include <cstring>
 #include <filesystem>
 #include <opencv2/core.hpp>
 #include <opencv2/core/base.hpp>
@@ -144,7 +146,28 @@ void yolo_handler(utility_server &us, Yolov11Session &sess, websocketpp::connect
 
 
  
-int main() {
+int main(int argc, char** argv) {
+
+    if (argc == 3 && strcmp(argv[1], "--test-mode") == 0){
+        utility_server s;
+        auto fp = std::filesystem::path {"/Users/anlhr/Projects/onnx_websockets/models/yolo11x_obb.onnx"};
+        auto onnx_sess = Yolov11Session(fp);
+        s.set_message_handler([&s, &onnx_sess](websocketpp::connection_hdl hdl, server::message_ptr msg){yolo_handler(s, onnx_sess,hdl, msg);});
+        
+        std::istringstream iss (argv[2]);
+        int p_listen;
+
+        if (iss >> p_listen){
+            ;
+        }
+        else {
+            std::cerr << "Could not convert 2nd cmdline arg to int to use for port. Running on std port.";
+            exit(1);
+        }
+        std::cout << "Server ready." << std::endl;
+        s.run(p_listen);
+
+    }
     // create websocket server & onnx session
     utility_server s;
     auto fp = std::filesystem::path {"/Users/anlhr/Projects/onnx_websockets/models/yolo11x_obb.onnx"};

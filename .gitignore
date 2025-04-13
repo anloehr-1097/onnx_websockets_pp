@@ -13,3 +13,5 @@ src/websocketpp/
 *.~undo-tree~
 onnxruntime-inference-examples/
 .DS_Store
+
+**/__pycache__/**
