@@ -13,7 +13,7 @@ class ServerIntegrationTest(unittest.TestCase):
         cls.server_path = cls.root_path / Path("build/src/main")
         assert cls.server_path.exists(), f"server path {cls.server_path} does not exist"
         cls.server_process = subprocess.Popen(
-            [f"{cls.server_path}", "--test-mode", "9002"],
+            [f"{cls.server_path}", "--test-mode", "9003"],
             stdout=subprocess.PIPE
         )
 
@@ -26,7 +26,7 @@ class ServerIntegrationTest(unittest.TestCase):
     def test_request(self):
         img_path: Path = self.root_path / Path("images/test_img_broccoli.jpeg")
         img = Image.open(img_path).convert("RGB")
-        with connect("ws://localhost:9002") as websocket:
+        with connect("ws://localhost:9003") as websocket:
 
             bytesio: BytesIO = BytesIO()
             img.save(bytesio, format="JPEG")

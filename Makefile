@@ -29,3 +29,4 @@ run:
 
 run-tests:
 	./build/tests/cust_test
+	cd py_client && python -m unittest
