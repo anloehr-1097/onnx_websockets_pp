@@ -119,17 +119,15 @@ void yolo_handler(utility_server &us, Yolov11Session &sess, websocketpp::connect
     if (msg->get_opcode() == websocketpp::frame::opcode::binary){
         std::vector<uchar> payload_2(msg->get_payload().begin(), msg->get_payload().end());
         cv::Mat img = cv::imdecode(payload_2, cv::IMREAD_COLOR_RGB);
-        cv::Mat new_img = preprocess_img(img, cv::Size(640, 640), 1);
+        cv::Mat new_img = preprocess_img(img, cv::Size(640, 640), 0);
         if (new_img.empty()) {
             throw std::runtime_error("Failed to decode image from byte string");
         }
-
         sess.set_input_image(new_img);
         // sess.read_input_image(new_img);
         auto onnx_out_tens = sess.detect();
         auto res = sess.postprocess(onnx_out_tens);
         //     auto res = sess.detect(new_img);
-        std::cout << "Result: " << res << std::endl;
         new_msg_payload = "Bytes frame. Image has size (" +
             std::to_string(new_img.rows) +
             "," + 

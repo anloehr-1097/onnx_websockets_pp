@@ -13,14 +13,28 @@ This serves as my own TODO list.
 - [x] send image via websocket connection to backend
 - [ ] define ouput format, send results back
 
-## Onnxruntime
+## OnnxInferLib
 - [ ] interface __inference : image -> result__ accepting arbitrary images
 - [ ] __class InputHandler__ capable of receiving and preprocessing image
 - [ ] the RUN method of the onnx_sess should be of type __Run: images -> result__
 - [ ] write postprocessor to handle outputs of the model
 
+### Input images
+- [ ] robustify
+- [ ] maybe integrate preprocessor into main class to determine resize sz + norm constants dynamically
+
+
+### postprocessor
+- [ ] parse all outputs, not just the single highest one --> store in vector
+
+### flexibility
+- [ ] read input output sizes from model, same with input output names --> no hardcoding
+
 ## model
-- [ ] integrate YOLOv11 instead of random model used to date
+- [x] integrate YOLOv11 instead of random model used to date
+- [ ] redesign constructor to allow for other inference providers
+- [ ]
+
 # Status
 First baby steps have been taken toward the goal, but a lot of work remains to be done.
 
@@ -45,6 +59,8 @@ cmake --build .
 
 ```
 
+# Remarks
+- export the yolo model with nms=True to onnx format.
 
 
 # YOLOv11
