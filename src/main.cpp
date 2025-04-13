@@ -15,7 +15,8 @@
 #include <websocketpp/server.hpp>
 #include <functional>
 // #include <onnxruntime_cxx_api.h>
-#include "OnnxInferLib/inference.h"
+// #include "OnnxInferLib/inference.h"
+#include "inference.h"
 #include "config.h"
 #include "debug_utils.h"
 
@@ -253,7 +254,6 @@ int main() {
     onnx_sess.set_input_image(img);
     auto onnx_out_tens = onnx_sess.detect();
     auto res = onnx_sess.postprocess(onnx_out_tens);
-    std::cout << "Result: " << res << std::endl;
 
     // -- server related logic --
     // set message handler for server & run server

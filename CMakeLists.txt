@@ -11,8 +11,6 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 message("System / OS: ${CMAKE_SYSTEM_NAME}")
 
-
-
 add_subdirectory(src)
-# add_subdirectory(tests)
+add_subdirectory(tests)
 

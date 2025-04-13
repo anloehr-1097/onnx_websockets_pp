@@ -35,4 +35,4 @@ target_include_directories(main PUBLIC "/Users/anlhr/Projects/onnx_websockets/sr
 target_compile_definitions(main PRIVATE ASIO_STANDALONE)
 target_link_libraries(main PRIVATE pthread ${OpenCV_LIBS})
 add_subdirectory(OnnxInferLib)
-target_link_libraries(main PUBLIC OnnxInferLib)
+target_link_libraries(main PRIVATE OnnxInferLib)

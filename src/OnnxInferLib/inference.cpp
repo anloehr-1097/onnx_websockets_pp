@@ -12,7 +12,7 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 #include <string>
-#include "inference.h"
+#include "include/inference.h"
 
 
 Ort::MemoryInfo get_mem_info(std::string memtype){

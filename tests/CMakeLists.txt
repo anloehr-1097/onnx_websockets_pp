@@ -11,7 +11,7 @@ FetchContent_MakeAvailable(googletest)
 add_executable(cust_test test_cust_func.cpp)
 target_link_libraries(cust_test PRIVATE
   GTest::gtest_main
-  MyLib)
+  OnnxInferLib)
 
 # add_test(cust_test_gtests cust_test)  # add test to run manually
 include(GoogleTest)

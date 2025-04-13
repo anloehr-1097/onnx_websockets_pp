@@ -17,6 +17,12 @@ run_client:
 	echo "Running client."
 	python main.py
 
+all:
+	# combination of all steps
+	make clean && make prep && make build-project
 
 test:
 	echo "Testing."
+
+run:
+	./build/src/main

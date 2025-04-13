@@ -7,6 +7,8 @@
 #include <opencv2/core.hpp>
 #include <opencv2/opencv.hpp>
 #include <onnxruntime_cxx_api.h>
+
+
 struct CustOnnxConfig{
     /*
      * Keep all configs regarding model here.
@@ -56,8 +58,8 @@ private:
 
 public:
     // Yolov11 inference session
-    static const int width= CustOnnxConfig::input_width();
-    static const int height = CustOnnxConfig::input_height();
+    static const int width = CustOnnxConfig::input_width();
+    static const int height = CustOnnxConfig::input_height();  // get this dynamically
     static const int channels = CustOnnxConfig::input_channels();
     static constexpr std::array<int64_t, 4> input_shape {1, 3, width, height};
 
@@ -98,23 +100,10 @@ public:
         );
         return inp_tens;
     }
-    // void read_input(cv::Mat &img){
-    //
-    //     float *buffer = img.ptr<float>();
-    //     // TODO check that input shape == image shape
-    //     input_tensor = Ort::Value::CreateTensor<float>(
-    //         memory_info,
-    //         buffer,
-    //         img.total() * img.channels(),
-    //         input_shape.data(),
-    //         input_shape.size()
-    //     );
-    // };
 
     void set_input_image(cv::Mat &img){
         cv::dnn::blobFromImage(img, input_image, 1.0, cv::Size(640, 640), cv::Scalar(), false, false);
     };
-
 
     std::vector<Ort::Value> detect(){
         // TODO find out how to define these globally 
@@ -129,8 +118,6 @@ public:
             input_shape.size()
         );
         auto out_tens = session.Run(run_options, input_names, &input_tens, 1, output_names, 1);
-        // delete *input_names;
-        // delete *output_names;
         return out_tens;
     };
 
@@ -180,7 +167,7 @@ public:
             std::cout << e << ", ";
         }
         std::cout << ")" << std::endl;
-        std::cout << "type: " << ti.GetTensorTypeAndShapeInfo().GetElementType() << std::endl;
+        std::cout << "Type: " << ti.GetTensorTypeAndShapeInfo().GetElementType() << std::endl;
     };
 
     std::vector<Ort::Value> run(Ort::Value &inp_tens){
@@ -201,12 +188,12 @@ ptrdiff_t postprocess(std::vector<Ort::Value>& output){
         auto shape = output[0].GetTensorTypeAndShapeInfo().GetShape();
         ONNXTensorElementDataType type = output[0].GetTensorTypeAndShapeInfo().GetElementType();
 
-        std::cout << "shape: ( ";
-        for (int64_t s: shape){
-            std::cout << s << ", ";
-        };
-        std::cout << ")" << std::endl;
-        std::cout << "Type: " << type << std::endl;
+        // std::cout << "shape: ( ";
+        // for (int64_t s: shape){
+        //     std::cout << s << ", ";
+        // };
+        // std::cout << ")" << std::endl;
+        // std::cout << "Type: " << type << std::endl;
 
         const void* raw_data = output[0].GetTensorData<void>();
         if (type == ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT) {
@@ -279,21 +266,8 @@ ptrdiff_t postprocess(std::vector<Ort::Value>& output){
             // std::cout << "Max score: "<< scores.at(*std::max_element(scores.begin(), scores.end()));
             std::cout << "Confidence: " << float_data[4] << "Class: " << float_data[5] << std::endl;
             return float_data[5];
-        };
+        }
+        else { return -1;};
     };
-
-// ptrdiff_t postprocess(std::vector<Ort::Value> output){
-//         const float* probs = output[0].GetTensorData<float>();
-//         const float* end = probs + 80;
-//         const float* max_p = std::max_element(probs+1, end);
-//         auto max_p_index = std::distance(probs, max_p);
-//         assert(max_p_index >= 1);
-//         std::cout << "Max index <=> Label: "<< max_p_index << std::endl;
-//         // softmax(results_);
-//         // result_ = std::distance(results_.begin(), std::max_element(results_.begin(), results_.end()));
-//         // return result_;
-//         delete probs;
-//         return max_p_index;
-//     };
 };
 

@@ -52,3 +52,11 @@ target_include_directories(
     OnnxInferLib INTERFACE 
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
+# the public identifier makes the headers in include available under their names
+# from main.cpp this allows us to '#include "inference.h"'.
+target_include_directories(
+    OnnxInferLib PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+
+)
