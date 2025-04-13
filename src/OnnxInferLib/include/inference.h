@@ -102,6 +102,8 @@ public:
     }
 
     void set_input_image(cv::Mat &img){
+        assert(img.type() == CV_32FC3 && "Image type must be CV_32FC3");
+        assert(img.isContinuous() && "Image must be in contiguous memory");
         cv::dnn::blobFromImage(img, input_image, 1.0, cv::Size(640, 640), cv::Scalar(), false, false);
     };
 
