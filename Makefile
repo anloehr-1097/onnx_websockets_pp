@@ -26,3 +26,6 @@ test:
 
 run:
 	./build/src/main
+
+run-tests:
+	./build/tests/cust_test
