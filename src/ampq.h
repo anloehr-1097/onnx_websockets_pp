@@ -1,9 +1,11 @@
 #include "ampq_socket.h"
+#include "amqpcpp/message.h"
 #include <amqpcpp.h>
 #include <arpa/inet.h>
 #include <cstdint>
 #include <iostream>
 #include <memory>
+#include <string>
 #include <sys/socket.h>
 #include <utility>
 
@@ -23,6 +25,7 @@ public:
   bool connection_ready = false;
   MyConnectionHandler(MySocket sock) : sock(sock) {}
   std::shared_ptr<AMQP::Channel> channel;
+  std::string buf = {};
 
   void onData(AMQP::Connection *connection, const char *data,
               size_t size) override {
@@ -65,6 +68,26 @@ public:
               << channel->usable() << std::endl;
     connection_ready = true;
     channel->publish("my-exchange", "celery", "Hello AMQP, I'm here!\n");
+    channel->consume("celery")
+        .onSuccess([](const std::string &tag) {
+          std::cout << tag << std::endl;
+          std::cout << "onSuccess called\n";
+        })
+        .onData([](const char *data, int64_t len) {
+          std::cout << "onData called\n";
+          std::cout << "Data: " << data << std::endl;
+          // auto jd = json::parse(data);
+        })
+        .onComplete([](int64_t lg, bool d) {
+          std::cout << "onComplete called";
+          std::cout << "Long: " << lg << " & bool: " << d << std::endl;
+        })
+        .onReceived([this](const AMQP::Message &message, uint64_t deliveryTag,
+                           bool redelivered) {
+          std::cout << "Message received.\n";
+          std::cout << "Message body" << message.body() << ".\n";
+        });
+    std::cout << "Started consuming\n";
   }
 
   /**

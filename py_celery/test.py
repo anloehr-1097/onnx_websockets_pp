@@ -1,13 +1,13 @@
-from main import hello
+from tasks import cpp_worker_task
 import time
 
-res = hello.delay()
+res = cpp_worker_task.delay("Hello cpp.")
 
 print(f"Task id = {res.task_id}")
 
 
 while True:
-    if res.status == "SUCCESS":
-        print(res.result)
+    if res.state == "SUCCESS":
+        print(res.get())
         break
     time.sleep(2)

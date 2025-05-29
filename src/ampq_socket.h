@@ -5,6 +5,7 @@
 #include <iostream>
 #include <memory>
 #include <netinet/in.h>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <string_view>
 #include <sys/select.h>
@@ -13,6 +14,7 @@
 #define PORT 5672
 // #define PORT 15692
 
+using json = nlohmann::json;
 class MySocket {
   struct sockaddr_in server;
   std::shared_ptr<int> _sock;
@@ -46,11 +48,7 @@ public:
   }
 
   ssize_t _receive() {
-    ssize_t received = recv(*_sock, buffer, sizeof(buffer), 0);
-    // std::string_view s(buffer, received);
-    // std::cout << "Received " << s << " of length " << s.length() <<
-    // std::endl;
-    std::cout << "Received " << received << " bytes." << std::endl;
+    ssize_t received = recv(*_sock, this->buffer, sizeof(this->buffer), 0);
     return received;
   }
 
@@ -84,6 +82,14 @@ public:
   }
 
   void reset_buf() { std::fill(buffer, buffer + sizeof(buffer), 0); }
+  void print_buf(size_t num_bytes) {
+
+    std::cout << "Received " << num_bytes << " bytes." << std::endl;
+    for (ssize_t i = 0; i < num_bytes; ++i) {
+      printf("%02x ", static_cast<unsigned char>(buffer[i]));
+    }
+    printf("\n");
+  }
 };
 
 #endif // SRC_AMPQ_SOCKET

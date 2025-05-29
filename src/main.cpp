@@ -202,6 +202,7 @@ int main(int argc, char **argv) {
     if (poll_status == 1) {
       // socket readable
       received = sock._receive();
+      sock.print_buf(received);
       if (received > 0) {
         // Pass incoming data to the AMQP connection
         while (parsed_bytes < received) {
@@ -209,8 +210,7 @@ int main(int argc, char **argv) {
           parsed_bytes = connection.parse(sock.buffer + parsed_bytes,
                                           received - parsed_bytes);
         }
-        // myHandler.channel->consume("celery");
-        // myHandler.onData(&connection, sock.buffer, received);
+
       } else if (received == 0) {
         std::cout << "Server closed connection\n";
         break;
@@ -227,9 +227,9 @@ int main(int argc, char **argv) {
     elapsed +=
         (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
     // std::cout << "Microseconds elapsed: " << elapsed << std::endl;
-    if (elapsed > 2 * 1000000) {
-      std::cout << "send heartbeat \n";
-      std::cout << "Seconds elapsed: " << elapsed / 1000000 << std::endl;
+    if (elapsed > 3 * 1000000) {
+      // std::cout << "send heartbeat \n";
+      // std::cout << "Seconds elapsed: " << elapsed / 1000000 << std::endl;
       connection.heartbeat();
       elapsed = 0;
     }
