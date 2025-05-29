@@ -27,12 +27,15 @@
 
 find_package( OpenCV REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
+include_directories(  "/Users/anlhr/Projects/AMQP-CPP/include" )
+
 
 add_executable(main main.cpp)
-target_include_directories(main PUBLIC "/Users/anlhr/Projects/onnx_websockets/src/websocketpp" "/opt/homebrew/include")
+target_include_directories(main PUBLIC "/Users/anlhr/Projects/onnx_websockets/src/websocketpp" "/opt/homebrew/include" "/Users/anlhr/Projects/AMQP-CPP/include")
 
 # Define ASIO_STANDALONE for standalone Asio usage
 target_compile_definitions(main PRIVATE ASIO_STANDALONE)
-target_link_libraries(main PRIVATE pthread ${OpenCV_LIBS})
+target_link_libraries(main PRIVATE pthread ${OpenCV_LIBS} )
+target_link_libraries(main PUBLIC "/Users/anlhr/Projects/AMQP-CPP/build/bin/libamqpcpp.dylib")
 add_subdirectory(OnnxInferLib)
 target_link_libraries(main PRIVATE OnnxInferLib)
