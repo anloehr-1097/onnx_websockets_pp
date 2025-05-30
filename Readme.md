@@ -35,6 +35,11 @@ This serves as my own TODO list.
 - [ ] redesign constructor to allow for other inference providers
 - [ ]
 
+
+## AMQP
+- extend handlers to parse json, reset internal buffer once message has been completely processed
+- send integrate image processing on bytes frame
+
 # Status
 First baby steps have been taken toward the goal, but a lot of work remains to be done.
 
