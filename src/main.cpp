@@ -202,7 +202,7 @@ int main(int argc, char **argv) {
     if (poll_status == 1) {
       // socket readable
       received = sock._receive();
-      sock.print_buf(received);
+      // sock.print_buf(received);
       if (received > 0) {
         // Pass incoming data to the AMQP connection
         while (parsed_bytes < received) {

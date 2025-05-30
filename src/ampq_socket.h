@@ -20,7 +20,7 @@ class MySocket {
   std::shared_ptr<int> _sock;
 
 public:
-  char buffer[4096] = {0};
+  char buffer[1000000] = {0};
   MySocket(int port = 5672, const char *address = "127.0.0.1") {
     _sock = std::make_shared<int>(socket(AF_INET, SOCK_STREAM, 0));
     if (_sock < 0) {
