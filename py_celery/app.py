@@ -10,7 +10,9 @@ img.save(bytes_img, format=img.format)
 if __name__ == "__main__":
     # This will load the Celery app but not start workers
     res = cpp_worker_task.delay("Hello cpp.")
-    res_img = cpp_worker_task_img.delay(bytes_img.getvalue())
+    res_img = cpp_worker_task_img.apply_async(
+        (bytes_img.getvalue(),), serializer="json"
+    )
     print(f"Task id regular task = {res.task_id}")
     print(f"Task id image task = {res_img.task_id}")
 

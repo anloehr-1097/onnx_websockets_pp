@@ -1,12 +1,15 @@
 #include "ampq_socket.h"
-// #include "amqpcpp/message.h"
+#include "amqpcpp/envelope.h"
+#include "amqpcpp/table.h"
 #include "callbacks.h"
 #include <amqpcpp.h>
 #include <arpa/inet.h>
 #include <cstdint>
+#include <cstring>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <sys/socket.h>
 #include <utility>
 
@@ -69,7 +72,13 @@ public:
     std::cout << "Channel ready / usable: " << channel->ready() << " / "
               << channel->usable() << std::endl;
     connection_ready = true;
-    channel->publish("my-exchange", "celery", "Hello AMQP, I'm here!\n");
+    // char *msg_ch = "Hello AMQP, I'm here!\n";
+    // AMQP::Envelope msg(std::string_view(msg_ch, strlen(msg_ch)));
+    // AMQP::Table msg_headers =
+    //     AMQP::Table().set("content-type", "application/json");
+    // msg.setHeaders(msg_headers);
+    // std::cout << "Publish Message: " << msg.body() << std::endl;
+    // channel->publish("my-exchange", "celery", msg);
     channel->consume("celery")
         .onSuccess(onSuccessCb)
         .onData([this](const char *data, int64_t len) {

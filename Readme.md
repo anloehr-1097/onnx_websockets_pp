@@ -39,6 +39,7 @@ This serves as my own TODO list.
 ## AMQP
 - extend handlers to parse json, reset internal buffer once message has been completely processed
 - send integrate image processing on bytes frame
+- why do the published message not have the correct 'content-type' and can thus not be parsed by JSON parser? 
 
 # Status
 First baby steps have been taken toward the goal, but a lot of work remains to be done.
