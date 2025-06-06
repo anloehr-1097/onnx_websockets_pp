@@ -22,6 +22,7 @@
 // custom lib imports
 #include "ampq.h"
 #include "ampq_socket.h"
+#include "base64.h"
 #include "config.h"
 #include "debug_utils.h"
 #include "inference.h"

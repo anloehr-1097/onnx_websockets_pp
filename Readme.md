@@ -74,3 +74,10 @@ classes 80
 img size: 640 x 640
 input name: images
 output name: output0
+
+# Dependencies
+
+## Base64 
+Credits go to Rene Nyffenegger for the base64 encoding / decoding source.
+- https://github.com/ReneNyffenegger/cpp-base64
+- https://renenyffenegger.ch/notes/development/Base64/Encoding-and-decoding-base-64-with-cpp/

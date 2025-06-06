@@ -1,4 +1,6 @@
 #include "json_utils.h"
+#include "base64.h"
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <nlohmann/json.hpp>
@@ -11,12 +13,18 @@
 using json = nlohmann::json;
 void print_util() { std::cout << "Hello JSON world!"; }
 
-cv::Mat parse_binary_image(const std::vector<uchar> data) {
+void write_base64_to_file(const std::string &data) {
+  std::string fname("b64img.txt");
+  std::ofstream fp(fname);
+  fp << data;
+}
+cv::Mat parse_binary_image(const std::vector<uchar> &data) {
   // assume the string is binary64 encoding of image
 
   // cv::Mat m = cv::Mat(cv::Size(810, 1080), CV_32FC3, data).clone();
 
-  cv::Mat img = cv::imdecode(data, cv::IMREAD_COLOR_RGB).clone();
+  cv::Mat img = cv::imdecode(data, cv::IMREAD_UNCHANGED).clone();
+  cv::imwrite("decoded_img.jpeg", img);
   return img;
 }
 
@@ -35,8 +43,12 @@ std::map<std::string, std::string> parse_object_msg(const json &js) {
   }
   if (js.contains("__value__")) {
     mp["value"] = js["__value__"];
-    std::vector<uchar> v(js["__value__"].begin(), js["__value__"].end());
-    cv::Mat mat = parse_binary_image(js["__value__"]);
+    write_base64_to_file(mp["value"]);
+    std::string b64dec(base64_decode(mp["value"]));
+    // std::vector<uchar> v(js["__value__"].begin(), js["__value__"].end());
+    std::vector<uchar> v(b64dec.begin(), b64dec.end());
+    // cv::Mat mat = parse_binary_image(js["__value__"]);
+    cv::Mat mat = parse_binary_image(v);
     std::cout << "CV Mat size: " << mat.size << std::endl;
     std::cout << "CV Mat : " << *mat.data << std::endl;
   }

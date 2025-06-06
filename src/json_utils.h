@@ -20,5 +20,6 @@ std::string parse_string_msg(const nlohmann::json &);
 std::vector<std::string> parse_array_msg(const nlohmann::json &,
                                          std::vector<std::string> &);
 std::map<std::string, std::string> parse_object_msg(const nlohmann::json &);
+void write_base64_to_file(const std::string &);
 
 #endif // SRC_JSON_UTIL_H

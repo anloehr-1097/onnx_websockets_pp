@@ -36,7 +36,7 @@ include_directories( ${OpenCV_INCLUDE_DIRS} )
 include_directories(  "/Users/anlhr/Projects/AMQP-CPP/include" )
 
 
-add_executable(main main.cpp callbacks.cpp json_utils.cpp)
+add_executable(main main.cpp callbacks.cpp json_utils.cpp base64.cpp)
 target_include_directories(main PUBLIC "/Users/anlhr/Projects/onnx_websockets/src/websocketpp" "/opt/homebrew/include" "/Users/anlhr/Projects/AMQP-CPP/include")
 
 # Define ASIO_STANDALONE for standalone Asio usage
