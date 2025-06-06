@@ -36,3 +36,6 @@ run-rabbit:
 
 run-celery:
 	celery -A py_celery.main worker --loglevel=info
+
+run-redis:
+	docker run --rm --name redis-store -p 6379:6379 redis:latest

@@ -1,12 +1,22 @@
 #include "callbacks.h"
+#include "json_utils.h"
 #include <cstdint>
+#include <fstream>
+#include <ios>
 #include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <opencv2/core.hpp>
 #include <string>
 #include <string_view>
 
 using json = nlohmann::json;
+
+void save_json(json json, std::string fname = "json_out.json") {
+  std::ofstream fs(fname, std::ios_base::out);
+  fs << json;
+  fs.close();
+}
 
 void onDataCb(std::string &buf, const char *data, int64_t len) {
 
@@ -35,12 +45,32 @@ void onReceivedCb(std::shared_ptr<AMQP::Channel> ch,
   std::string_view s(message.body(), 100);
   std::cout << "Message body first 100 bytes: " << s << ".\n";
   std::cout << "Message content type: " << message.contentType() << ".\n";
+
   try {
     std::string msg_str =
         std::string(message.body(), message.body() + message.bodySize());
 
-    auto json_out = json::parse(msg_str);
-    std::cout << "Json parsing complete." << std::endl;
+    std::string fname = std::string("json_out") + std::to_string(deliveryTag);
+    json json_out = json::parse(msg_str);
+    save_json(json_out, fname);
+    std::cout << "Json parsing complete, JSON saved." << std::endl;
+    if (determine_msg(json_out) == STRING_MSG) {
+      std::cout << "JSON string message: " << parse_string_msg(json_out);
+    } else if (determine_msg(json_out) == ARRAY_MSG) {
+      std::vector<std::string> v;
+      parse_array_msg(json_out, v);
+      std::cout << "Json array message: ";
+      for (auto i : v) {
+        std::cout << i << "\t";
+      }
+      std::cout << std::endl;
+      // get first array elem
+    } else {
+
+      std::cout << "Json other type of message\n";
+    }
+    // if data is base64 image
+
   } catch (json::parse_error &e) {
 
     std::cout << "JSON parse error thrown: " << e.what() << "\n";

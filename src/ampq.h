@@ -1,6 +1,7 @@
+#ifndef SRC_AMPQ_H
+#define SRC_AMPQ_H
+
 #include "ampq_socket.h"
-#include "amqpcpp/envelope.h"
-#include "amqpcpp/table.h"
 #include "callbacks.h"
 #include <amqpcpp.h>
 #include <arpa/inet.h>
@@ -8,11 +9,14 @@
 #include <cstring>
 #include <iostream>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <string_view>
 #include <sys/socket.h>
 #include <utility>
 
+using json = nlohmann::json;
+// using json = nlohmann::json;
 // You'll need to extend the ConnectionHandler class and make your own, like
 // this
 class MyConnectionHandler : public AMQP::ConnectionHandler {
@@ -72,13 +76,19 @@ public:
     std::cout << "Channel ready / usable: " << channel->ready() << " / "
               << channel->usable() << std::endl;
     connection_ready = true;
+    json j_string = "Hello AMQP, I'm here!\n";
+    std::cout << j_string.dump();
     // char *msg_ch = "Hello AMQP, I'm here!\n";
+    // auto enc_msg = nlohmann::js
     // AMQP::Envelope msg(std::string_view(msg_ch, strlen(msg_ch)));
-    // AMQP::Table msg_headers =
-    //     AMQP::Table().set("content-type", "application/json");
-    // msg.setHeaders(msg_headers);
-    // std::cout << "Publish Message: " << msg.body() << std::endl;
-    // channel->publish("my-exchange", "celery", msg);
+    AMQP::Envelope msg(j_string.dump());
+    // AMQP::Table msg_headers = AMQP::Table().set(
+    //     std::string("content_type"), std::string_view("application/json"));
+    msg.setContentType(std::string("application/json"));
+    std::cout << "Publish Message: " << msg.body() << std::endl;
+    std::cout << "Publish Message has content type: " << msg.hasContentType()
+              << std::endl;
+    channel->publish("my-exchange", "celery", j_string.dump());
     channel->consume("celery")
         .onSuccess(onSuccessCb)
         .onData([this](const char *data, int64_t len) {
@@ -128,3 +138,5 @@ public:
     return _five;
   }
 };
+
+#endif // SRC_AMPQ_H
