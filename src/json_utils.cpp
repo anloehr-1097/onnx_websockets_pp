@@ -20,9 +20,6 @@ void write_base64_to_file(const std::string &data) {
 }
 cv::Mat parse_binary_image(const std::vector<uchar> &data) {
   // assume the string is binary64 encoding of image
-
-  // cv::Mat m = cv::Mat(cv::Size(810, 1080), CV_32FC3, data).clone();
-
   cv::Mat img = cv::imdecode(data, cv::IMREAD_UNCHANGED).clone();
   cv::imwrite("decoded_img.jpeg", img);
   return img;
@@ -50,7 +47,6 @@ std::map<std::string, std::string> parse_object_msg(const json &js) {
     // cv::Mat mat = parse_binary_image(js["__value__"]);
     cv::Mat mat = parse_binary_image(v);
     std::cout << "CV Mat size: " << mat.size << std::endl;
-    std::cout << "CV Mat : " << *mat.data << std::endl;
   }
   return mp;
 }

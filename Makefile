@@ -9,16 +9,19 @@ clean:
 	echo "Cleaning build dir."
 	rm -rf build
 
-run_server: 
-	echo "Running server."
-	./build/main
+# run_server: 
+# 	echo "Running server."
+# 	./build/main
 
-run_client:
-	echo "Running client."
-	python main.py
+# run_client:
+# 	echo "Running client."
+# 	python main.py
+#
+py-celery:
+	python py_celery/app.py
 
 all:
-	# combination of all steps
+	# combination of all steps in build process
 	make clean && make prep && make build-project
 
 test:
@@ -34,8 +37,8 @@ run-tests:
 run-rabbit:
 	docker run -p 5672:5672 -p 15692:15692 rabbitmq
 
-run-celery:
-	celery -A py_celery.main worker --loglevel=info
-
+# run-celery:
+# 	celery -A py_celery.main worker --loglevel=info
+#
 run-redis:
 	docker run --rm --name redis-store -p 6379:6379 redis:latest

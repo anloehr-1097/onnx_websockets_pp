@@ -3,7 +3,7 @@ from io import BytesIO
 from PIL import Image
 
 
-img: Image.Image = Image.open("../images/bus.jpg")
+img: Image.Image = Image.open("images/bus.jpg")
 bytes_img: BytesIO = BytesIO()
 img.save(bytes_img, format=img.format)
 

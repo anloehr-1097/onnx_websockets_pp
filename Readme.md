@@ -1,15 +1,17 @@
 # Goal
-I am convinced that learning or gaining a better understanding of a programming language is best done by implementing projects 
-in this language. 
-
-The objective of this tiny project is to serve an object detection model
-leveraging the onnxruntime and provide an inference endpoint via a websocket connection.
-This is part of my Cpp journey. As I continue to be a bloody beginner, the implementation does not claim to be {memory safe, optimized, <you name it>}.
+The objective of this tiny project is to serve an object detection model and on the path, learn about C++.
+The model is served leveraging the onnxruntime and interacted with via the AMQP-CPP library.
+Originally, the idea was to server the model via websockets as can be told by some remnants in the source.
 
 # Next Steps
 This serves as my own TODO list.
 
-## Websocket utility server
+## Milestones
+1. Use image parsed to trigger detection.
+2. play back detection in a certain format from CPP --> Python & parse on python side
+3. Write unittests and refactor code 
+
+## Websocket utility server (stashed)
 - [x] send image via websocket connection to backend
 - [ ] define ouput format, send results back
 
@@ -37,33 +39,49 @@ This serves as my own TODO list.
 
 
 ## AMQP
-- extend handlers to parse json, reset internal buffer once message has been completely processed
-- send integrate image processing on bytes frame
-- why do the published message not have the correct 'content-type' and can thus not be parsed by JSON parser? 
-
-# Status
-First baby steps have been taken toward the goal, but a lot of work remains to be done.
+- reset internal buffer once message has been completely processed
 
 
-## GTest include and write tests
+## GTest 
+- include and write tests
 
 # Dependencies
 - OpenCV
 - OnnxRuntime
 - WebSocketpp
 - GTest
+- Base64 (https://github.com/ReneNyffenegger/cpp-base64)
 
 # Build
 
-## Modifications to CMakeLists.txt
-- [ ] TODO
-## Build Commands
-After adapting the CMakeLists.txt, the following commands build an executable called 'main' in the build folder.
+## Build & Run Commands
+Use 'make' to build and run the project / services.
+### Building the project
+```bash
+make all
 ```
-mkdir build && cd build && cmake ..
-cmake --build .
 
+### Running the AMQP-CPP client
+```bash
+make run
 ```
+
+### Running the py celery app
+```bash
+make py-celery
+```
+
+### Running the Rabbit MQ Broker Docker Container
+```bash
+make run-rabbit
+```
+
+### Running the Redis Backend Docker Container
+```bash
+make run-redis
+```
+
+It is essential that the redis and the rabbit mq containers are up before starting the python celery app or the C++ AMQP client.
 
 # Remarks
 - export the yolo model with nms=True to onnx format.
@@ -75,9 +93,6 @@ img size: 640 x 640
 input name: images
 output name: output0
 
-# Dependencies
 
-## Base64 
-Credits go to Rene Nyffenegger for the base64 encoding / decoding source.
-- https://github.com/ReneNyffenegger/cpp-base64
-- https://renenyffenegger.ch/notes/development/Base64/Encoding-and-decoding-base-64-with-cpp/
+# Disclaimer
+As this is part of my (early) Cpp journey and I continue to be a bloody beginner, the implementation does not claim to be {memory safe, optimized, <you name it>}.
