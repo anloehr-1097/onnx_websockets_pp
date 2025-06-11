@@ -1,6 +1,8 @@
 #include "callbacks.h"
+#include "ampq.h"
 #include "json_utils.h"
 #include "tasks.h"
+#include "utils.h"
 #include <cstdint>
 #include <fstream>
 #include <ios>
@@ -100,3 +102,41 @@ void onReceivedCb(std::shared_ptr<AMQP::Channel> ch,
 // });
 
 void onErrorCb(const char *message) { std::cout << message; }
+
+void onReceivedPredCb(std::shared_ptr<AMQP::Channel> ch,
+                      std::shared_ptr<Yolov11Session> sess,
+                      const AMQP::Message &message, uint64_t deliveryTag,
+                      bool redelivered) {
+
+  ch->ack(deliveryTag);
+  std::cout << "Acknowledged message with tag " << deliveryTag << std::endl;
+  std::string_view rk{message.routingkey()};
+  std::cout << "Routing key: " << rk << std::endl;
+  if (!(rk == "yolo prediction")) {
+    std::cout << "Wrong task, aborting\n";
+    return;
+  }
+  // parse json based on value of 'task'
+  try {
+    std::string msg_str =
+        std::string(message.body(), message.body() + message.bodySize());
+    json json_out = json::parse(msg_str);
+
+    std::cout << "Prediction Task here\n";
+    std::variant<cv::Mat, int> img = get_image(json_out);
+    if (std::holds_alternative<cv::Mat>(img)) {
+      std::cout << "Image extracted.\n";
+      img = preprocess_img(std::get<cv::Mat>(img), cv::Size(640, 640), 0);
+      sess->set_input_image(std::get<cv::Mat>(img));
+      auto out_tens = sess->detect();
+      auto res = sess->postprocess(out_tens);
+      std::cout << "Prediction result: " << res << std::endl;
+
+    } else if (std::holds_alternative<int>(img)) {
+      std::cout << "Error extracting image.\n";
+    }
+  } catch (json::parse_error &e) {
+    std::cout << "JSON parse error thrown: " << e.what() << "\n";
+    std::cout << "JSON parse error thrown \n";
+  }
+}

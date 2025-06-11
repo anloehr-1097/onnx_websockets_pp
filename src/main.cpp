@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <opencv2/core.hpp>
 #include <opencv2/core/base.hpp>
 #include <opencv2/core/hal/interface.h>
@@ -162,13 +163,18 @@ void yolo_handler(utility_server &us, Yolov11Session &sess,
 }
 
 int main(int argc, char **argv) {
+
+  auto fp = std::filesystem::path{
+      "/Users/anlhr/Projects/onnx_websockets/models/yolo11x_obb.onnx"};
+  std::shared_ptr<Yolov11Session> sess = std::make_shared<Yolov11Session>(fp);
+  // auto onnx_sess = Yolov11Session(fp);
   MySocket sock({});
   sock.do_connect();
 
   int poll_status = 0;
   ssize_t received = 0;
   // create an instance of your own connection handler
-  MyConnectionHandler myHandler(sock);
+  MyConnectionHandler myHandler(sock, fp);
   // create a AMQP connection object
   AMQP::Connection connection(&myHandler, AMQP::Login("guest", "guest"), "/");
 
@@ -263,9 +269,6 @@ int main(int argc, char **argv) {
 }
 // if (argc == 3 && strcmp(argv[1], "--test-mode") == 0) {
 //   utility_server s;
-//   auto fp = std::filesystem::path{
-//       "/Users/anlhr/Projects/onnx_websockets/models/yolo11x_obb.onnx"};
-//   auto onnx_sess = Yolov11Session(fp);
 //   s.set_message_handler([&s, &onnx_sess](websocketpp::connection_hdl
 //   hdl,
 //                                          server::message_ptr msg) {

@@ -4,6 +4,7 @@
 #include "ampq_socket.h"
 #include "amqpcpp/flags.h"
 #include "callbacks.h"
+#include "inference.h"
 #include <amqpcpp.h>
 #include <arpa/inet.h>
 #include <cstdint>
@@ -32,9 +33,13 @@ class MyConnectionHandler : public AMQP::ConnectionHandler {
 public:
   MySocket sock; // socket descriptor
   bool connection_ready = false;
-  MyConnectionHandler(MySocket sock) : sock(sock) {}
   std::shared_ptr<AMQP::Channel> channel;
   std::string buf = {};
+  std::shared_ptr<Yolov11Session> onnx_sess;
+  static constexpr std::string_view fp{};
+
+  MyConnectionHandler(MySocket sock, std::filesystem::path fp)
+      : sock(sock), onnx_sess(std::make_shared<Yolov11Session>(fp)) {}
 
   void onData(AMQP::Connection *connection, const char *data,
               size_t size) override {
@@ -121,7 +126,8 @@ public:
         .onComplete(onCompleteCb)
         .onReceived([this](const AMQP::Message &message, uint64_t deliveryTag,
                            bool redelivered) {
-          onReceivedCb(this->channel, message, deliveryTag, redelivered);
+          onReceivedPredCb(this->channel, this->onnx_sess, message, deliveryTag,
+                           redelivered);
         });
 
     std::cout << "Started consuming yolo inf queue\n";

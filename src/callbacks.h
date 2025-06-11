@@ -2,6 +2,7 @@
 #define SRC_CALLBACKS_H_
 
 #include "amqpcpp.h"
+#include "inference.h"
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -11,6 +12,10 @@ void onSuccessCb(const std::string &);
 void onCompleteCb(int64_t, bool);
 void onReceivedCb(std::shared_ptr<AMQP::Channel>, const AMQP::Message &,
                   uint64_t, bool);
+void onReceivedPredCb(std::shared_ptr<AMQP::Channel> ch,
+                      std::shared_ptr<Yolov11Session> sess,
+                      const AMQP::Message &message, uint64_t deliveryTag,
+                      bool redelivered);
 void onErrorCb(const char *message);
 
 #endif // SRC_CALLBACKS_H_
