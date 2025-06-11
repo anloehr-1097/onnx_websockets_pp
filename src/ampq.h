@@ -2,7 +2,6 @@
 #define SRC_AMPQ_H
 
 #include "ampq_socket.h"
-#include "amqpcpp/exchangetype.h"
 #include "amqpcpp/flags.h"
 #include "callbacks.h"
 #include <amqpcpp.h>
@@ -73,12 +72,13 @@ public:
     // create channel, set exchange and queue
     channel = std::make_shared<AMQP::Channel>(connection);
     channel->declareExchange("celery", AMQP::direct, AMQP::durable);
+    channel->declareQueue("celery");
     channel->bindQueue("celery", "celery", "celery");
 
     // AMQP::Table ch_cfg =
     //     AMQP::Table().set(std::string{"durable"}, AMQP::durable);
     channel->declareExchange("yolo_pred", AMQP::direct, AMQP::durable);
-    channel->declareQueue("yolo prediction", AMQP::durable);
+    channel->declareQueue("yolo prediction");
     channel->bindQueue("yolo_pred", "yolo prediction", "yolo_inf");
 
     std::cout << "Channel created." << std::endl;
@@ -91,14 +91,16 @@ public:
     // char *msg_ch = "Hello AMQP, I'm here!\n";
     // auto enc_msg = nlohmann::js
     // AMQP::Envelope msg(std::string_view(msg_ch, strlen(msg_ch)));
-    AMQP::Envelope msg(j_string.dump());
+    // AMQP::Envelope msg(j_string.dump());
     // AMQP::Table msg_headers = AMQP::Table().set(
     //     std::string("content_type"), std::string_view("application/json"));
-    msg.setContentType(std::string("application/json"));
-    std::cout << "Publish Message: " << msg.body() << std::endl;
+    // msg.setContentType(std::string("application/json"));
+    std::cout << "Publish Message: " << j_string << std::endl;
     // std::cout << "Publish Message has content type: " << msg.hasContentType()
     //           << std::endl;
-    channel->publish("yolo_pred", "yolo_inf", j_string.dump());
+    // channel->publish("yolo_pred", "yolo_inf", j_string.dump());
+    channel->publish("celery", "celery", j_string.dump());
+
     channel->consume("celery")
         .onSuccess(onSuccessCb)
         .onData([this](const char *data, int64_t len) {

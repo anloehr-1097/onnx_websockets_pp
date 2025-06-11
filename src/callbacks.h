@@ -11,5 +11,6 @@ void onSuccessCb(const std::string &);
 void onCompleteCb(int64_t, bool);
 void onReceivedCb(std::shared_ptr<AMQP::Channel>, const AMQP::Message &,
                   uint64_t, bool);
+void onErrorCb(const char *message);
 
 #endif // SRC_CALLBACKS_H_

@@ -43,6 +43,8 @@ void onReceivedCb(std::shared_ptr<AMQP::Channel> ch,
   // std::string_view s(message.body(), 100);
   // std::cout << "Message body first 100 bytes: " << s << ".\n";
   // std::cout << "Message content type: " << message.contentType() << ".\n";
+  ch->ack(deliveryTag);
+  std::cout << "Acknowledged message with tag " << deliveryTag << std::endl;
   std::string_view rk{message.routingkey()};
   std::cout << "Routing key: " << rk << std::endl;
   Task task;
@@ -63,8 +65,6 @@ void onReceivedCb(std::shared_ptr<AMQP::Channel> ch,
         std::string(message.body(), message.body() + message.bodySize());
     json json_out = json::parse(msg_str);
 
-    ch->ack(deliveryTag);
-    std::cout << "Acknowledged message with tag " << deliveryTag << std::endl;
     if (task == PredictionTask) {
       std::cout << "Prediction Task here\n";
       std::variant<cv::Mat, int> img = get_image(json_out);
@@ -98,3 +98,5 @@ void onReceivedCb(std::shared_ptr<AMQP::Channel> ch,
 //   std::cout << "Message received.\n";
 //   std::cout << "Message body" << message.body() << ".\n";
 // });
+
+void onErrorCb(const char *message) { std::cout << message; }
