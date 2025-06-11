@@ -7,9 +7,9 @@ Originally, the idea was to server the model via websockets as can be told by so
 This serves as my own TODO list.
 
 ## Milestones
-1. Use image parsed to trigger detection.
 2. play back detection in a certain format from CPP --> Python & parse on python side
 3. Write unittests and refactor code 
+4. refactoring
 
 ## Websocket utility server (stashed)
 - [x] send image via websocket connection to backend
@@ -96,3 +96,26 @@ output name: output0
 
 # Disclaimer
 As this is part of my (early) Cpp journey and I continue to be a bloody beginner, the implementation does not claim to be {memory safe, optimized, <you name it>}.
+
+
+
+
+# Refactoring
+## main.cpp
+- read yolo_model file path from config file / parse as commandline arg
+- read login information for AMQP connection from config file
+
+
+- onData should check if the socket is writable, then send, else delay or abort
+
+main components: 
+
+connection
+connectionHandler
+MySocket
+event loop
+json parsing
+onnx inference
+image processing
+
+

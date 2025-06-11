@@ -3,6 +3,7 @@
 #include "websocketpp/frame.hpp"
 #include <cctype>
 #include <cstddef>
+#include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <functional>
@@ -31,6 +32,7 @@
 
 #include <amqpcpp.h>
 
+constexpr int DEBUG = 1;
 typedef websocketpp::server<websocketpp::config::asio> server;
 
 class utility_server;
@@ -163,53 +165,53 @@ void yolo_handler(utility_server &us, Yolov11Session &sess,
 }
 
 int main(int argc, char **argv) {
-
-  auto fp = std::filesystem::path{
-      "/Users/anlhr/Projects/onnx_websockets/models/yolo11x_obb.onnx"};
-  std::shared_ptr<Yolov11Session> sess = std::make_shared<Yolov11Session>(fp);
-  // auto onnx_sess = Yolov11Session(fp);
+  // create socket underlying AMQP connection used by connection handler
   MySocket sock({});
   sock.do_connect();
 
-  int poll_status = 0;
-  ssize_t received = 0;
-  // create an instance of your own connection handler
-  MyConnectionHandler myHandler(sock, fp);
+  // create an instance of custom connection handler
+  auto model_path = std::filesystem::path{
+      "/Users/anlhr/Projects/onnx_websockets/models/yolo11x_obb.onnx"};
+  MyConnectionHandler myHandler(sock, model_path);
+
   // create a AMQP connection object
   AMQP::Connection connection(&myHandler, AMQP::Login("guest", "guest"), "/");
 
-  // connection.parse(sock.buffer, sock._receive());
+  if (DEBUG) {
+    std::cout << "Connection ready: " << connection.ready() << std::endl;
+    std::cout << "Connection usable: " << connection.usable() << std::endl;
+    std::cout << "Connection initialized: " << connection.initialized()
+              << std::endl;
+  }
 
-  // AMQP::Channel channel(&connection);
-
-  // // use the channel object to call the AMQP method you like
-  // channel.declareExchange("my-exchange", AMQP::fanout);
-  // // channel.declareQueue("celery", );
-  // channel.bindQueue("my-exchange", "celery", "celery");
-
-  std::cout << "Connection ready: " << connection.ready() << std::endl;
-  std::cout << "Connection usable: " << connection.usable() << std::endl;
-  std::cout << "Connection initialized: " << connection.initialized()
-            << std::endl;
-
+  int poll_status = 0;
+  ssize_t received = 0;
+  size_t parsed_bytes = 0;
   timeval timeout;
+  timeval start, end;
   timeout.tv_usec = 0;
   timeout.tv_sec = 0;
-  struct timeval start, end;
-
   int64 elapsed = 0;
-  // event loop
+  // basic event loop
   while (true) {
-    gettimeofday(&start, nullptr);
+    // every iteration check if socket is readable, if so read into buffer
+    // Every couple of seconds, send a heartbeat to the Rabbit-MQ broker
+    if (gettimeofday(&start, nullptr) != 0) {
+      std::cerr << "Cannot get current time. Exiting..." << std::endl;
+      exit(-1);
+    }
+
+    // at each iteration, clear data buffer of MySocket
     received = 0;
     sock.reset_buf();
+
+    // check if socket is readable
     poll_status = sock.readable(timeout);
-    size_t parsed_bytes = 0;
+    parsed_bytes = 0;
 
     if (poll_status == 1) {
-      // socket readable
+      // socket is readable, ready to receive message
       received = sock._receive();
-      // sock.print_buf(received);
       if (received > 0) {
         // Pass incoming data to the AMQP connection
         while (parsed_bytes < received) {
@@ -227,10 +229,10 @@ int main(int argc, char **argv) {
       }
       // read
     } else if (poll_status < 1) {
-      // std::cout << "Poll status: " << poll_status << std::endl;
-    } else {
+      // std::cout << "Not ready to read" << std::endl;
     }
     gettimeofday(&end, nullptr);
+    // check if hearbeat must be sent
     elapsed +=
         (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
     // std::cout << "Microseconds elapsed: " << elapsed << std::endl;
@@ -241,81 +243,5 @@ int main(int argc, char **argv) {
       elapsed = 0;
     }
   }
-
-  // myHandler.channel->consume("celery")
-  //     .onSuccess([](const std::string &tag) {
-  //       std::cout << "Successful consumption yielding tag " << tag <<
-  //       std::endl;
-  //     })
-  //     .onCancelled([](const std::string &tag) {
-  //       std::cout << "Consumer tag " << tag << " was cancelled." <<
-  //       std::endl;
-  //     })
-  //     .onReceived([&myHandler](const AMQP::Message &message,
-  //                              uint64_t deliveryTag, bool redelivered) {
-  //       std::cout << "received " << deliveryTag << std::endl;
-  //
-  //       // we remove the queue -- to see if this indeed causes the
-  //       onCancelled
-  //       // method to be called
-  //       if (deliveryTag > 3)
-  //         myHandler.channel->removeQueue("celery");
-  //
-  //       // ack the message
-  //       myHandler.channel->ack(deliveryTag);
-  //     });
-
   return 0;
 }
-// if (argc == 3 && strcmp(argv[1], "--test-mode") == 0) {
-//   utility_server s;
-//   s.set_message_handler([&s, &onnx_sess](websocketpp::connection_hdl
-//   hdl,
-//                                          server::message_ptr msg) {
-//     yolo_handler(s, onnx_sess, hdl, msg);
-//   });
-//
-//   std::istringstream iss(argv[2]);
-//   int p_listen;
-//
-//   if (iss >> p_listen) {
-//     ;
-//   } else {
-//     std::cerr << "Could not convert 2nd cmdline arg to int to use for
-//     port.
-//     "
-//                  "Running on std port.";
-//     exit(1);
-//   }
-//   std::cout << "Server ready." << std::endl;
-//   s.run(p_listen);
-// }
-// // create websocket server & onnx session
-// utility_server s;
-// auto fp = std::filesystem::path{
-//     "/Users/anlhr/Projects/onnx_websockets/models/yolo11x_obb.onnx"};
-// auto onnx_sess = Yolov11Session(fp);
-// onnx_sess.get_input_output_names();
-// onnx_sess.get_output_type_info();
-// // read image from disk & preprocess image
-// auto img = cv::imread(
-//     "/Users/anlhr/Projects/onnx_websockets/images/test_img_broccoli.jpg",
-//     cv::IMREAD_COLOR_RGB);
-// cv::Mat resized_img;
-// img = preprocess_img(img, cv::Size(640, 640), 0);
-// assert(img.type() == CV_32FC3 && "Image type must be CV_32FC3");
-// assert(img.isContinuous() && "Image must be in contiguous memory");
-// onnx_sess.set_input_image(img);
-// auto onnx_out_tens = onnx_sess.detect();
-// auto res = onnx_sess.postprocess(onnx_out_tens);
-//
-// // -- server related logic --
-// // set message handler for server & run server
-// // s.set_message_handler([&s, &onnx_sess](websocketpp::connection_hdl
-// hdl,
-// // server::message_ptr msg){outside_handler(s, onnx_sess,hdl, msg);});
-// s.set_message_handler([&s, &onnx_sess](websocketpp::connection_hdl hdl,
-//                                        server::message_ptr msg) {
-//   yolo_handler(s, onnx_sess, hdl, msg);
-// });
-// s.run(listen_port);

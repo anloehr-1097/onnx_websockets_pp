@@ -5,23 +5,22 @@
 #include <iostream>
 #include <memory>
 #include <netinet/in.h>
-#include <nlohmann/json.hpp>
 #include <string>
 #include <string_view>
 #include <sys/select.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 #define PORT 5672
 // #define PORT 15692
 
-using json = nlohmann::json;
 class MySocket {
-  struct sockaddr_in server;
-  std::shared_ptr<int> _sock;
+  struct sockaddr_in server;  // info on server to connect to
+  std::shared_ptr<int> _sock; // socket in use by class
 
 public:
   char buffer[1000000] = {0};
-  MySocket(int port = 5672, const char *address = "127.0.0.1") {
+  explicit MySocket(int port = 5672, const char *address = "127.0.0.1") {
     _sock = std::make_shared<int>(socket(AF_INET, SOCK_STREAM, 0));
     if (_sock < 0) {
       std::cerr << "Could not create socket" << std::endl;
@@ -36,7 +35,8 @@ public:
       std::cerr << "Failed to connect" << std::endl;
       return;
     }
-    std::cout << "Connect succesfull" << std::endl;
+
+    std::cout << "Connect succesful" << std::endl;
     return;
   }
 
@@ -90,6 +90,7 @@ public:
     }
     printf("\n");
   }
+  void close() { ::close(*_sock); }
 };
 
 #endif // SRC_AMPQ_SOCKET

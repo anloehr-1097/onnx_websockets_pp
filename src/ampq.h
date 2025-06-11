@@ -4,6 +4,7 @@
 #include "ampq_socket.h"
 #include "amqpcpp/flags.h"
 #include "callbacks.h"
+#include "config.h"
 #include "inference.h"
 #include <amqpcpp.h>
 #include <arpa/inet.h>
@@ -15,24 +16,14 @@
 #include <string>
 #include <string_view>
 #include <sys/socket.h>
+#include <unistd.h>
 #include <utility>
 
 using json = nlohmann::json;
-// using json = nlohmann::json;
-// You'll need to extend the ConnectionHandler class and make your own, like
-// this
+
 class MyConnectionHandler : public AMQP::ConnectionHandler {
-  /**
-   *  Method that is called by the AMQP library every time it has data
-   *  available that should be sent to RabbitMQ.
-   *  @param  connection  pointer to the main connection object
-   *  @param  data        memory buffer with the data that should be sent to
-   * RabbitMQ
-   *  @param  size        size of the buffer
-   */
 public:
   MySocket sock; // socket descriptor
-  bool connection_ready = false;
   std::shared_ptr<AMQP::Channel> channel;
   std::string buf = {};
   std::shared_ptr<Yolov11Session> onnx_sess;
@@ -41,6 +32,14 @@ public:
   MyConnectionHandler(MySocket sock, std::filesystem::path fp)
       : sock(sock), onnx_sess(std::make_shared<Yolov11Session>(fp)) {}
 
+  /**
+   *  Method that is called by the AMQP library every time it has data
+   *  available that should be sent to RabbitMQ.
+   *  @param  connection  pointer to the main connection object
+   *  @param  data        memory buffer with the data that should be sent to
+   * RabbitMQ
+   *  @param  size        size of the buffer
+   */
   void onData(AMQP::Connection *connection, const char *data,
               size_t size) override {
     // @todo
@@ -50,7 +49,7 @@ public:
     //  the bytes that could not immediately be sent, and try to send
     //  them again when the socket becomes writable again
 
-    // should check if socket is writable, then write
+    // TODO(andy) should check if socket is writable, then write
     size_t sent = 0;
     while (sent < size) {
       int res = sock._send(data, size);
@@ -72,40 +71,22 @@ public:
     // @todo
     //  add your own implementation, for example by creating a channel
     //  instance, and start publishing or consuming
-    // std::cout << "onReady called" << std::endl;
     // std::cout << "Max frame size: " << connection->maxFrame() << std::endl;
     // create channel, set exchange and queue
     channel = std::make_shared<AMQP::Channel>(connection);
-    channel->declareExchange("celery", AMQP::direct, AMQP::durable);
-    channel->declareQueue("celery");
-    channel->bindQueue("celery", "celery", "celery");
+    register_channel_callbacks();
 
-    // AMQP::Table ch_cfg =
-    //     AMQP::Table().set(std::string{"durable"}, AMQP::durable);
-    channel->declareExchange("yolo_pred", AMQP::direct, AMQP::durable);
-    channel->declareQueue("yolo prediction");
-    channel->bindQueue("yolo_pred", "yolo prediction", "yolo_inf");
+    // setup exchanges, along with queues and their respective routing keys
+    setup_exchange_and_queue_routing(channel, "celery", "celery", "celery");
+    setup_exchange_and_queue_routing(channel, "yolo_pred", "yolo prediction",
+                                     "yolo_inf");
 
-    std::cout << "Channel created." << std::endl;
-    std::cout << "Channel ready / usable: " << channel->ready() << " / "
-              << channel->usable() << std::endl;
-
-    connection_ready = true;
+    // publish test message
     json j_string = "Hello AMQP, I'm here!\n";
-    // std::cout << j_string.dump();
-    // char *msg_ch = "Hello AMQP, I'm here!\n";
-    // auto enc_msg = nlohmann::js
-    // AMQP::Envelope msg(std::string_view(msg_ch, strlen(msg_ch)));
-    // AMQP::Envelope msg(j_string.dump());
-    // AMQP::Table msg_headers = AMQP::Table().set(
-    //     std::string("content_type"), std::string_view("application/json"));
-    // msg.setContentType(std::string("application/json"));
-    std::cout << "Publish Message: " << j_string << std::endl;
-    // std::cout << "Publish Message has content type: " << msg.hasContentType()
-    //           << std::endl;
     // channel->publish("yolo_pred", "yolo_inf", j_string.dump());
     channel->publish("celery", "celery", j_string.dump());
 
+    // start consumption on channels defined above
     channel->consume("celery")
         .onSuccess(onSuccessCb)
         .onData([this](const char *data, int64_t len) {
@@ -117,7 +98,6 @@ public:
           onReceivedCb(this->channel, message, deliveryTag, redelivered);
         });
 
-    std::cout << "Started consuming celery queue\n";
     channel->consume("yolo prediction")
         .onSuccess(onSuccessCb)
         .onData([this](const char *data, int64_t len) {
@@ -129,10 +109,24 @@ public:
           onReceivedPredCb(this->channel, this->onnx_sess, message, deliveryTag,
                            redelivered);
         });
-
-    std::cout << "Started consuming yolo inf queue\n";
   }
 
+  void register_channel_callbacks() {
+    channel->onReady(
+        [this] { std::cout << "Channel is ready: " << channel->ready(); });
+    channel->onError(
+        [this](const char *msg) { std::cout << "Channel error: " << msg; });
+  }
+
+  int setup_exchange_and_queue_routing(std::shared_ptr<AMQP::Channel>,
+                                       std::string_view exchange_name,
+                                       std::string_view qname,
+                                       std::string_view routing_key) {
+
+    channel->declareExchange(exchange_name, AMQP::direct, AMQP::durable);
+    channel->declareQueue(qname);
+    channel->bindQueue(exchange_name, qname, routing_key);
+  }
   /**
    *  Method that is called by the AMQP library when a fatal error occurs
    *  on the connection, for example because data received from RabbitMQ
@@ -141,8 +135,8 @@ public:
    *  @param  message         A human readable error message
    */
   void onError(AMQP::Connection *connection, const char *message) override {
-    std::cout << "onError called" << std::endl;
-    std::cout << "Message: " << message << std::endl;
+    std::cout << "onError called with message " << message << std::endl;
+    connection->close();
     // @todo
     //  add your own implementation, for example by reporting the error
     //  to the user of your program, log the error, and destruct the
@@ -159,14 +153,18 @@ public:
    */
   void onClosed(AMQP::Connection *connection) override {
     std::cout << "onClosed called" << std::endl;
+    sock.close();
+    exit(-1);
+
     // @todo
     //  add your own implementation, for example by closing down the
     //  underlying TCP connection too
   }
   uint16_t onNegotiate(AMQP::Connection *connection,
                        uint16_t interval) override {
-    uint16_t _five = 5;
-    return _five;
+    // negotiate heartbeat interval
+    // uint16_t _five = 5;
+    return heartbeat_interval; // from src/config.h
   }
 };
 
