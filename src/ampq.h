@@ -2,6 +2,8 @@
 #define SRC_AMPQ_H
 
 #include "ampq_socket.h"
+#include "amqpcpp/exchangetype.h"
+#include "amqpcpp/flags.h"
 #include "callbacks.h"
 #include <amqpcpp.h>
 #include <arpa/inet.h>
@@ -66,18 +68,26 @@ public:
     // @todo
     //  add your own implementation, for example by creating a channel
     //  instance, and start publishing or consuming
-    std::cout << "onReady called" << std::endl;
-    std::cout << "Max frame size: " << connection->maxFrame() << std::endl;
+    // std::cout << "onReady called" << std::endl;
+    // std::cout << "Max frame size: " << connection->maxFrame() << std::endl;
     // create channel, set exchange and queue
     channel = std::make_shared<AMQP::Channel>(connection);
-    channel->declareExchange("my-exchange", AMQP::fanout);
-    channel->bindQueue("my-exchange", "celery", "celery");
+    channel->declareExchange("celery", AMQP::direct, AMQP::durable);
+    channel->bindQueue("celery", "celery", "celery");
+
+    // AMQP::Table ch_cfg =
+    //     AMQP::Table().set(std::string{"durable"}, AMQP::durable);
+    channel->declareExchange("yolo_pred", AMQP::direct, AMQP::durable);
+    channel->declareQueue("yolo prediction", AMQP::durable);
+    channel->bindQueue("yolo_pred", "yolo prediction", "yolo_inf");
+
     std::cout << "Channel created." << std::endl;
     std::cout << "Channel ready / usable: " << channel->ready() << " / "
               << channel->usable() << std::endl;
+
     connection_ready = true;
     json j_string = "Hello AMQP, I'm here!\n";
-    std::cout << j_string.dump();
+    // std::cout << j_string.dump();
     // char *msg_ch = "Hello AMQP, I'm here!\n";
     // auto enc_msg = nlohmann::js
     // AMQP::Envelope msg(std::string_view(msg_ch, strlen(msg_ch)));
@@ -86,9 +96,9 @@ public:
     //     std::string("content_type"), std::string_view("application/json"));
     msg.setContentType(std::string("application/json"));
     std::cout << "Publish Message: " << msg.body() << std::endl;
-    std::cout << "Publish Message has content type: " << msg.hasContentType()
-              << std::endl;
-    channel->publish("my-exchange", "celery", j_string.dump());
+    // std::cout << "Publish Message has content type: " << msg.hasContentType()
+    //           << std::endl;
+    channel->publish("yolo_pred", "yolo_inf", j_string.dump());
     channel->consume("celery")
         .onSuccess(onSuccessCb)
         .onData([this](const char *data, int64_t len) {
@@ -99,7 +109,20 @@ public:
                            bool redelivered) {
           onReceivedCb(this->channel, message, deliveryTag, redelivered);
         });
-    std::cout << "Started consuming\n";
+
+    std::cout << "Started consuming celery queue\n";
+    channel->consume("yolo prediction")
+        .onSuccess(onSuccessCb)
+        .onData([this](const char *data, int64_t len) {
+          onDataCb(this->buf, data, len);
+        })
+        .onComplete(onCompleteCb)
+        .onReceived([this](const AMQP::Message &message, uint64_t deliveryTag,
+                           bool redelivered) {
+          onReceivedCb(this->channel, message, deliveryTag, redelivered);
+        });
+
+    std::cout << "Started consuming yolo inf queue\n";
   }
 
   /**

@@ -1,4 +1,5 @@
 from celery import Celery
+from kombu import Exchange, Queue
 from io import BytesIO
 
 app = Celery(
@@ -6,6 +7,16 @@ app = Celery(
     broker="amqp://guest@localhost//",
     backend="redis://localhost:6379/0",
 )
+
+task_routes = {
+    "tasks.cpp_worker_task": {"queue": "celery"},
+    "tasks.cpp_worker_task_with_img": {"queue": "yolo prediction"},
+}
+app.conf.task_queues = (
+    Queue("celery", Exchange("celery"), routing_key="celery"),
+    Queue("yolo prediction", Exchange("yolo_pred"), routing_key="yolo_inf"),
+)
+app.conf.task_routes = task_routes
 
 
 @app.task(name="cpp_worker_task")
