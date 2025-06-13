@@ -4,7 +4,7 @@
 #include "../config.h"
 #include "../utils/json_utils.h"
 #include "amqp_socket.h"
-#include "amqpcpp/flags.h"
+// #include "amqpcpp/flags.h"
 #include "callbacks.h"
 #include "inference.h"
 #include <amqpcpp.h>

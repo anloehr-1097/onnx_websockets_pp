@@ -140,7 +140,7 @@ std::map<std::string, std::string> parse_object_msg(const json &js) {
   return mp;
 }
 
-json to_js_string(const std::string &str) {
+json to_js_string(const std::string_view &str) {
   json j_string(str);
   return j_string;
 }

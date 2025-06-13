@@ -2,7 +2,8 @@
 #define SRC_CALLBACKS_H_
 
 #include "../OnnxInferLib/include/inference.h"
-#include "amqpcpp.h"
+// #include "amqpcpp.h"
+#include <amqpcpp.h>
 #include <cstdint>
 #include <memory>
 #include <string>

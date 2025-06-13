@@ -7,12 +7,12 @@ else()
 endif()
 
 # TODO
-add_library(amqp amqp.cpp callbacks.cpp tasks.cpp)
+add_library(amqp conn_handler.cpp callbacks.cpp tasks.cpp)
 # Open CV package to handle images
 find_package(OpenCV REQUIRED)
 target_include_directories(amqp PRIVATE ${OpenCV_INCLUDE_DIRS})
 target_include_directories(
-    amqp PRIVATE "/Users/anlhr/Projects/AMQP-CPP/include"
+    amqp PUBLIC "/Users/anlhr/Projects/AMQP-CPP/include"
 )
 target_include_directories(
     amqp INTERFACE
