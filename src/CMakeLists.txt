@@ -25,24 +25,32 @@
 #
 # link_directories("${ONNXRUNTIME_ROOTDIR}/lib")
 
-include(FetchContent)
+# include(FetchContent)
 # requests lib similar to python requests
 # JSON parsing lib
-FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
-FetchContent_MakeAvailable(json)
+# FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+# FetchContent_MakeAvailable(json)
 
-find_package( OpenCV REQUIRED )
-include_directories( ${OpenCV_INCLUDE_DIRS} )
-include_directories(  "/Users/anlhr/Projects/AMQP-CPP/include" )
+# find_package(OpenCV REQUIRED)
+# include_directories(${OpenCV_INCLUDE_DIRS})
+# include_directories("/Users/anlhr/Projects/AMQP-CPP/include")
 
 
-add_executable(main main.cpp callbacks.cpp json_utils.cpp base64.cpp tasks.cpp)
-target_include_directories(main PUBLIC "/Users/anlhr/Projects/onnx_websockets/src/websocketpp" "/opt/homebrew/include" "/Users/anlhr/Projects/AMQP-CPP/include")
+# add_executable(main main.cpp callbacks.cpp json_utils.cpp base64.cpp tasks.cpp)
+add_executable(main main.cpp)
+
+# target_include_directories(main PUBLIC "/Users/anlhr/Projects/onnx_websockets/src/websocketpp" "/opt/homebrew/include" "/Users/anlhr/Projects/AMQP-CPP/include")
+target_include_directories(main PUBLIC  "/opt/homebrew/include") 
 
 # Define ASIO_STANDALONE for standalone Asio usage
-target_compile_definitions(main PRIVATE ASIO_STANDALONE)
-target_link_libraries(main PRIVATE pthread ${OpenCV_LIBS} )
-target_link_libraries(main PUBLIC "/Users/anlhr/Projects/AMQP-CPP/build/bin/libamqpcpp.dylib")
+# target_compile_definitions(main PRIVATE ASIO_STANDALONE)
+# target_link_libraries(main PRIVATE pthread ${OpenCV_LIBS} )
+# target_link_libraries(main PUBLIC "/Users/anlhr/Projects/AMQP-CPP/build/bin/libamqpcpp.dylib")
 add_subdirectory(OnnxInferLib)
+add_subdirectory(amqp)
+add_subdirectory(utils)
+
 target_link_libraries(main PRIVATE OnnxInferLib)
-target_link_libraries(main PUBLIC nlohmann_json::nlohmann_json)
+target_link_libraries(main PRIVATE amqp)
+
+# target_link_libraries(main PUBLIC nlohmann_json::nlohmann_json)

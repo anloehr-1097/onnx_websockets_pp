@@ -4,6 +4,7 @@
 #include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
 #include <string>
+#include <string_view>
 #include <vector>
 
 template <typename T> struct JM {
@@ -26,4 +27,5 @@ void write_base64_to_file(const std::string &);
 std::variant<cv::Mat, int> get_image(const nlohmann::json &);
 std::variant<std::string, int> get_hello_message(const nlohmann::json &);
 
+nlohmann::json to_js_string(std::string_view &);
 #endif // SRC_JSON_UTIL_H

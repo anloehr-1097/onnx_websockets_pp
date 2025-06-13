@@ -1,5 +1,5 @@
 #include "callbacks.h"
-#include "ampq.h"
+#include "amqp.h"
 #include "json_utils.h"
 #include "tasks.h"
 #include "utils.h"

@@ -80,7 +80,7 @@ std::variant<std::string, int> get_hello_message(const nlohmann::json &js) {
       auto ret = get_hello_message(elem);
       if (std::holds_alternative<std::string>(ret)) {
         return ret;
-      };
+      }
     }
   } else {
     return -1;
@@ -138,4 +138,9 @@ std::map<std::string, std::string> parse_object_msg(const json &js) {
     std::cout << "CV Mat size: " << mat.size << std::endl;
   }
   return mp;
+}
+
+json to_js_string(const std::string &str) {
+  json j_string(str);
+  return j_string;
 }

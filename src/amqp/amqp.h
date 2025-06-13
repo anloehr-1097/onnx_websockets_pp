@@ -1,10 +1,11 @@
 #ifndef SRC_AMPQ_H
 #define SRC_AMPQ_H
 
-#include "ampq_socket.h"
+#include "../config.h"
+#include "../utils/json_utils.h"
+#include "amqp_socket.h"
 #include "amqpcpp/flags.h"
 #include "callbacks.h"
-#include "config.h"
 #include "inference.h"
 #include <amqpcpp.h>
 #include <arpa/inet.h>
@@ -12,14 +13,13 @@
 #include <cstring>
 #include <iostream>
 #include <memory>
-#include <nlohmann/json.hpp>
 #include <string>
 #include <string_view>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <utility>
 
-using json = nlohmann::json;
+// using json = nlohmann::json;
 
 class MyConnectionHandler : public AMQP::ConnectionHandler {
 public:
@@ -82,9 +82,10 @@ public:
                                      "yolo_inf");
 
     // publish test message
-    json j_string = "Hello AMQP, I'm here!\n";
+    std::string_view j_string = "Hello AMQP, I'm here!\n";
     // channel->publish("yolo_pred", "yolo_inf", j_string.dump());
-    channel->publish("celery", "celery", j_string.dump());
+    // channel->publish("celery", "celery", j_string.dump());
+    channel->publish("celery", "celery", to_js_string(j_string).dump());
 
     // start consumption on channels defined above
     channel->consume("celery")

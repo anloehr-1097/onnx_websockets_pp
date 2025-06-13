@@ -42,6 +42,8 @@ target_include_directories(OnnxInferLib PUBLIC
     ${ONNXRUNTIME_ROOTDIR}/include/onnxruntime/core/session
 )
 
+find_package(OpenCV REQUIRED)
+include_directories(${OpenCV_INCLUDE_DIRS})
     
 target_compile_definitions(OnnxInferLib PUBLIC ASIO_STANDALONE)
 target_link_libraries(OnnxInferLib PUBLIC pthread "${ONNXRUNTIME_ROOTDIR}/lib/libonnxruntime.dylib" ${OpenCV_LIBS})
