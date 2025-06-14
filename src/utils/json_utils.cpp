@@ -15,7 +15,6 @@
 #include <vector>
 
 using json = nlohmann::json;
-void print_util() { std::cout << "Hello JSON world!"; }
 
 void write_base64_to_file(const std::string &data) {
   std::string fname("b64img.txt");
@@ -35,13 +34,6 @@ cv::Mat parse_binary_image(const std::vector<uchar> &data) {
   cv::Mat img = cv::imdecode(data, cv::IMREAD_UNCHANGED).clone();
   cv::imwrite(ss.str(), img);
   return img;
-}
-
-void print_base_json(const json &js) {
-  for (auto i : js) {
-    std::cout << i << std::endl;
-  }
-  std::cout << "\n";
 }
 
 std::string parse_string_msg(const json &js) {
@@ -130,12 +122,8 @@ std::map<std::string, std::string> parse_object_msg(const json &js) {
     mp["value"] = js["__value__"];
     write_base64_to_file(mp["value"]);
     std::string b64dec(base64_decode(mp["value"]));
-    // std::vector<uchar> v(js["__value__"].begin(), js["__value__"].end());
     std::vector<uchar> v(b64dec.begin(), b64dec.end());
-    // cv::Mat mat = parse_binary_image(js["__value__"]);
     cv::Mat mat = parse_binary_image(v);
-    // cv::imwrite("decoded_img.png", mat);
-    std::cout << "CV Mat size: " << mat.size << std::endl;
   }
   return mp;
 }
@@ -143,4 +131,18 @@ std::map<std::string, std::string> parse_object_msg(const json &js) {
 json to_js_string(const std::string_view &str) {
   json j_string(str);
   return j_string;
+}
+
+json write_celery_result_to_redis(const std::string &task_id,
+                                  const std::string &result) {
+  json j = {{"status", "SUCCESS"},
+            {"result", result},
+            {"traceback", nullptr},
+            {"children", nlohmann::json::array()},
+            {"date_done", "2025-06-13T16:00:00.123456"}, // use actual timestamp
+            {"task_id", task_id}};
+  return j;
+  // std::string key = "celery-task-meta-" + task_id;
+
+  // Use your Redis client to SET key to j.dump()
 }

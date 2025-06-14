@@ -12,8 +12,10 @@ add_library(amqp conn_handler.cpp callbacks.cpp tasks.cpp)
 find_package(OpenCV REQUIRED)
 target_include_directories(amqp PRIVATE ${OpenCV_INCLUDE_DIRS})
 target_include_directories(
-    amqp PUBLIC "/Users/anlhr/Projects/AMQP-CPP/include"
+    amqp PUBLIC "/Users/anlhr/Projects/AMQP-CPP/include" ""
 )
+target_include_directories(amqp PUBLIC "/opt/homebrew/Cellar/hiredis/1.3.0/include")
+
 target_include_directories(
     amqp INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -22,6 +24,7 @@ target_include_directories(
 target_link_libraries(amqp
     PRIVATE "/Users/anlhr/Projects/AMQP-CPP/build/bin/libamqpcpp.dylib"
 )
+target_link_libraries(amqp PUBLIC "/opt/homebrew/Cellar/hiredis/1.3.0/lib/libhiredis.dylib")
 
 target_link_libraries(amqp PRIVATE OnnxInferLib)
 target_link_libraries(amqp PRIVATE utils)

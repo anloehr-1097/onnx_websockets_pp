@@ -14,8 +14,6 @@ template <typename T> struct JM {
 };
 
 enum WhichMsg { ARRAY_MSG, OBJECT_MSG, STRING_MSG };
-void print_util();
-void print_base_json(const nlohmann::json &);
 void parse_hello_json_msg(const nlohmann::json &);
 WhichMsg determine_msg_type(const nlohmann::json &);
 std::string parse_string_msg(const nlohmann::json &);
@@ -28,4 +26,7 @@ std::variant<cv::Mat, int> get_image(const nlohmann::json &);
 std::variant<std::string, int> get_hello_message(const nlohmann::json &);
 
 nlohmann::json to_js_string(const std::string_view &);
+
+nlohmann::json write_celery_result_to_redis(const std::string &task_id,
+                                            const std::string &result);
 #endif // SRC_JSON_UTIL_H

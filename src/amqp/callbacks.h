@@ -2,6 +2,7 @@
 #define SRC_CALLBACKS_H_
 
 #include "../OnnxInferLib/include/inference.h"
+#include "hiredis/hiredis.h"
 // #include "amqpcpp.h"
 #include <amqpcpp.h>
 #include <cstdint>
@@ -15,6 +16,7 @@ void onReceivedCb(std::shared_ptr<AMQP::Channel>, const AMQP::Message &,
                   uint64_t, bool);
 void onReceivedPredCb(std::shared_ptr<AMQP::Channel> ch,
                       std::shared_ptr<Yolov11Session> sess,
+                      std::shared_ptr<redisContext> redis,
                       const AMQP::Message &message, uint64_t deliveryTag,
                       bool redelivered);
 void onErrorCb(const char *message);

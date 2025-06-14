@@ -27,5 +27,5 @@ def cpp_worker_task(inp: str):
 
 
 @app.task(name="cpp_worker_task_with_img")
-def cpp_worker_task_img(image: BytesIO):
+def cpp_worker_task_img(image: BytesIO) -> str:
     raise NotImplementedError("Also implemented in CPP")

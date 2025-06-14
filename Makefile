@@ -28,7 +28,7 @@ test:
 	echo "Testing."
 
 run:
-	./build/src/main
+	./build/src/main AMQP
 
 run-tests:
 	./build/tests/cust_test

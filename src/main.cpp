@@ -1,4 +1,3 @@
-// #include "ampq.h"
 #include "config.h"
 #include <amqp_socket.h>
 #include <amqpcpp.h>
@@ -69,16 +68,12 @@ void run_event_loop(MySocket &sock, AMQP::Connection &connection) {
       }
       // read
     } else if (poll_status < 1) {
-      // std::cout << "Not ready to read" << std::endl;
     }
     gettimeofday(&end, nullptr);
     // check if hearbeat must be sent
     elapsed +=
         (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
-    // std::cout << "Microseconds elapsed: " << elapsed << std::endl;
     if (elapsed > 3 * 1000000) {
-      // std::cout << "send heartbeat \n";
-      // std::cout << "Seconds elapsed: " << elapsed / 1000000 << std::endl;
       connection.heartbeat();
       elapsed = 0;
     }
@@ -86,7 +81,6 @@ void run_event_loop(MySocket &sock, AMQP::Connection &connection) {
 }
 
 int main(int argc, char **argv) {
-
   auto mpath = std::filesystem::path{model_path.data()};
   auto mode = parse_cmd_args(argc, argv);
 
@@ -95,12 +89,15 @@ int main(int argc, char **argv) {
     // create socket underlying AMQP connection used by connection handler
     MySocket sock(broker_listen_port, broker_addr.data());
     sock.do_connect(); // connect to broker Rabbit MQ
-    MyConnectionHandler myHandler(sock, mpath);
+    std::string_view ba(backend_addr);
+    MyConnectionHandler myHandler(sock, mpath, ba, backend_listen_port);
     // create a AMQP connection object
     AMQP::Connection connection(&myHandler, AMQP::Login("guest", "guest"), "/");
     run_event_loop(sock, connection);
 
+  } else if (mode == "websockets") {
   } else {
+    std::cerr << "No mode provided\n";
   }
   return 0;
 }

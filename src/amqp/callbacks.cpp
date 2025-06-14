@@ -4,6 +4,7 @@
 #include "utils.h"
 #include <cstdint>
 #include <fstream>
+#include <hiredis/hiredis.h>
 #include <ios>
 #include <iostream>
 #include <memory>
@@ -48,7 +49,7 @@ void onReceivedCb(std::shared_ptr<AMQP::Channel> ch,
   std::cout << "Acknowledged message with tag " << deliveryTag << std::endl;
   std::string_view rk{message.routingkey()};
   std::cout << "Routing key: " << rk << std::endl;
-  Task task;
+  TaskName task;
   if (rk == "celery") {
     std::cout << "Celery tasks\n";
     task = HelloTask;
@@ -104,12 +105,15 @@ void onErrorCb(const char *message) { std::cout << message; }
 
 void onReceivedPredCb(std::shared_ptr<AMQP::Channel> ch,
                       std::shared_ptr<Yolov11Session> sess,
+                      std::shared_ptr<redisContext> redis_storage,
                       const AMQP::Message &message, uint64_t deliveryTag,
                       bool redelivered) {
 
   ch->ack(deliveryTag);
   std::cout << "Acknowledged message with tag " << deliveryTag << std::endl;
   std::string_view rk{message.routingkey()};
+  std::string task_id = message.headers().get("id");
+  std::cout << "Task id: " << task_id << std::endl;
   std::cout << "Routing key: " << rk << std::endl;
   if (!(rk == "yolo prediction")) {
     std::cout << "Wrong task, aborting\n";
@@ -129,7 +133,34 @@ void onReceivedPredCb(std::shared_ptr<AMQP::Channel> ch,
       sess->set_input_image(std::get<cv::Mat>(img));
       auto out_tens = sess->detect();
       auto res = sess->postprocess(out_tens);
-      std::cout << "Prediction result: " << res << std::endl;
+      nlohmann::json js_resp =
+          write_celery_result_to_redis(task_id, std::to_string(res));
+      std::string cmd =
+          "SET celery-task-meta-" + task_id + " " + js_resp.dump();
+      const char *chcmd = cmd.c_str();
+
+      redisReply *reply =
+          (redisReply *)redisCommand(redis_storage.get(), chcmd);
+      std::cout << "Reply " << reply->str;
+      freeReplyObject(reply);
+
+      std::string get_cmd = "GET " + task_id;
+      reply = (redisReply *)redisCommand(redis_storage.get(), get_cmd.c_str());
+
+      std::cout << "Reply " << reply;
+
+      // Implement this
+      /* {
+"status": "SUCCESS",
+"result": "the_result",
+"traceback": null,
+"children": [],
+"date_done": "2025-06-13T16:00:00.123456",
+"task_id": "1234-5678-90ab-cdef"
+}
+      */
+
+      // test get
 
     } else if (std::holds_alternative<int>(img)) {
       std::cout << "Error extracting image.\n";

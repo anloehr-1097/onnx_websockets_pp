@@ -1,6 +1,7 @@
 from tasks import app, cpp_worker_task, cpp_worker_task_img
 from io import BytesIO
 from PIL import Image
+import time
 
 
 img: Image.Image = Image.open("images/guac.jpeg")
@@ -16,6 +17,7 @@ if __name__ == "__main__":
     print(f"Task id regular task = {res.task_id}")
     print(f"Task id image task = {res_img.task_id}")
 
-    while True:
-        if res.state == "SUCCESS":
-            print(res.get())
+    while res_img.status != "SUCCESS":
+        print("Waiting ... ")
+        time.sleep(1)
+    print(res_img.get())

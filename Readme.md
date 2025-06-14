@@ -101,6 +101,9 @@ As this is part of my (early) Cpp journey and I continue to be a bloody beginner
 
 
 # Refactoring
+
+- signal handler for graceful shutdown
+
 ## main.cpp
 - read yolo_model file path from config file / parse as commandline arg
 - read login information for AMQP connection from config file
@@ -117,5 +120,7 @@ event loop
 json parsing
 onnx inference
 image processing
+
+
 
 

@@ -6,6 +6,7 @@
 #include "amqp_socket.h"
 // #include "amqpcpp/flags.h"
 #include "callbacks.h"
+#include "hiredis/hiredis.h"
 #include "inference.h"
 #include <amqpcpp.h>
 #include <arpa/inet.h>
@@ -27,10 +28,14 @@ public:
   std::shared_ptr<AMQP::Channel> channel;
   std::string buf = {};
   std::shared_ptr<Yolov11Session> onnx_sess;
+  std::shared_ptr<redisContext> redis;
   static constexpr std::string_view fp{};
 
-  MyConnectionHandler(MySocket sock, std::filesystem::path fp)
-      : sock(sock), onnx_sess(std::make_shared<Yolov11Session>(fp)) {}
+  MyConnectionHandler(MySocket sock, std::filesystem::path fp,
+                      std::string_view &backend_address, int backend_port)
+      : sock(sock), onnx_sess(std::make_shared<Yolov11Session>(fp)),
+        redis(std::shared_ptr<redisContext>(
+            redisConnect(backend_address.data(), backend_port))) {}
 
   /**
    *  Method that is called by the AMQP library every time it has data
@@ -107,8 +112,8 @@ public:
         .onComplete(onCompleteCb)
         .onReceived([this](const AMQP::Message &message, uint64_t deliveryTag,
                            bool redelivered) {
-          onReceivedPredCb(this->channel, this->onnx_sess, message, deliveryTag,
-                           redelivered);
+          onReceivedPredCb(this->channel, this->onnx_sess, this->redis, message,
+                           deliveryTag, redelivered);
         });
   }
 
