@@ -78,9 +78,17 @@ public:
     register_channel_callbacks();
 
     // setup exchanges, along with queues and their respective routing keys
-    setup_exchange_and_queue_routing(channel, "celery", "celery", "celery");
-    setup_exchange_and_queue_routing(channel, "yolo_pred", "yolo prediction",
-                                     "yolo_inf");
+    int status = 0;
+    if ((status = setup_exchange_and_queue_routing(channel, "celery", "celery",
+                                                   "celery")) != 0) {
+      std::cerr << "Failed setting up exchange & key.\n";
+    }
+
+    if ((status = setup_exchange_and_queue_routing(
+             channel, "yolo_pred", "yolo prediction", "yolo_inf")) != 0) {
+
+      std::cerr << "Failed setting up exchange & key.\n";
+    };
 
     // publish test message
     std::string_view j_string = "Hello AMQP, I'm here!\n";
@@ -126,6 +134,7 @@ public:
     channel->declareExchange(exchange_name, AMQP::direct, AMQP::durable);
     channel->declareQueue(qname);
     channel->bindQueue(exchange_name, qname, routing_key);
+    return 0;
   }
   /**
    *  Method that is called by the AMQP library when a fatal error occurs
