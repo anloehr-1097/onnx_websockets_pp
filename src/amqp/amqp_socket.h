@@ -42,8 +42,6 @@ public:
 
   int _send(const char *message, size_t size) {
     int res = send(*_sock, message, size, 0);
-    std::cout << "Message sent " << message << " has " << size << " bytes."
-              << std::endl;
     return res;
   }
 

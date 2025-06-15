@@ -152,3 +152,5 @@ void onReceivedPredCb(std::shared_ptr<AMQP::Channel> ch,
     std::cout << "JSON parse error thrown \n";
   }
 }
+
+void onDataHello(std::string &buf, const char *data, int64_t len) {}

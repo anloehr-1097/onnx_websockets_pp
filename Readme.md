@@ -123,4 +123,5 @@ image processing
 
 
 
+/opt/homebrew/Caskroom/miniconda/base/lib/python3.12/site-packages/celery/backends/base.py 
 

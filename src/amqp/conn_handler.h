@@ -4,7 +4,6 @@
 #include "../config.h"
 #include "../utils/json_utils.h"
 #include "amqp_socket.h"
-// #include "amqpcpp/flags.h"
 #include "callbacks.h"
 #include "hiredis/hiredis.h"
 #include "inference.h"
@@ -12,15 +11,13 @@
 #include <arpa/inet.h>
 #include <cstdint>
 #include <cstring>
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <string_view>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <utility>
-
-// using json = nlohmann::json;
 
 class MyConnectionHandler : public AMQP::ConnectionHandler {
 public:
@@ -29,7 +26,6 @@ public:
   std::string buf = {};
   std::shared_ptr<Yolov11Session> onnx_sess;
   std::shared_ptr<redisContext> redis;
-  static constexpr std::string_view fp{};
 
   MyConnectionHandler(MySocket sock, std::filesystem::path fp,
                       std::string_view &backend_address, int backend_port)
@@ -88,8 +84,6 @@ public:
 
     // publish test message
     std::string_view j_string = "Hello AMQP, I'm here!\n";
-    // channel->publish("yolo_pred", "yolo_inf", j_string.dump());
-    // channel->publish("celery", "celery", j_string.dump());
     channel->publish("celery", "celery", to_js_string(j_string).dump());
 
     // start consumption on channels defined above
