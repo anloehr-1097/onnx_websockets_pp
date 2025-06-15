@@ -135,32 +135,14 @@ void onReceivedPredCb(std::shared_ptr<AMQP::Channel> ch,
       auto res = sess->postprocess(out_tens);
       nlohmann::json js_resp =
           write_celery_result_to_redis(task_id, std::to_string(res));
+      std::cout << js_resp.dump() << " <-- res backend insert\n";
       std::string cmd =
           "SET celery-task-meta-" + task_id + " " + js_resp.dump();
       const char *chcmd = cmd.c_str();
 
       redisReply *reply =
           (redisReply *)redisCommand(redis_storage.get(), chcmd);
-      std::cout << "Reply " << reply->str;
       freeReplyObject(reply);
-
-      std::string get_cmd = "GET " + task_id;
-      reply = (redisReply *)redisCommand(redis_storage.get(), get_cmd.c_str());
-
-      std::cout << "Reply " << reply;
-
-      // Implement this
-      /* {
-"status": "SUCCESS",
-"result": "the_result",
-"traceback": null,
-"children": [],
-"date_done": "2025-06-13T16:00:00.123456",
-"task_id": "1234-5678-90ab-cdef"
-}
-      */
-
-      // test get
 
     } else if (std::holds_alternative<int>(img)) {
       std::cout << "Error extracting image.\n";

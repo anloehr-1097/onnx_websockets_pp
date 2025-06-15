@@ -135,12 +135,16 @@ json to_js_string(const std::string_view &str) {
 
 json write_celery_result_to_redis(const std::string &task_id,
                                   const std::string &result) {
-  json j = {{"status", "SUCCESS"},
-            {"result", result},
-            {"traceback", nullptr},
-            {"children", nlohmann::json::array()},
-            {"date_done", "2025-06-13T16:00:00.123456"}, // use actual timestamp
-            {"task_id", task_id}};
+
+  // /opt/homebrew/Caskroom/miniconda/base/lib/python3.12/site-packages/celery/backends/base.py
+  // contains info on the format of the result expected.
+  std::time_t this_time = std::time({});
+  char time_str[std::size("yy-mm-ddThh:mm:ssZ")];
+  std::strftime(std::data(time_str), std::size(time_str), "%FT%TZ",
+                std::gmtime(&this_time));
+  json j = {{"status", "SUCCESS"},   {"result", result},
+            {"traceback", nullptr},  {"children", nlohmann::json::array()},
+            {"date_done", time_str}, {"task_id", task_id}};
   return j;
   // std::string key = "celery-task-meta-" + task_id;
 
