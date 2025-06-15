@@ -10,12 +10,13 @@
 std::string parse_cmd_args(int argc, char **argv) {
   if (argc == 1) {
     // first arg is program name
-    return "";
+    std::cerr << "Provide 'mode' to start in.\n";
+    exit(-1);
   } else if (argc == 2) {
     // second arg: mode
     return argv[1];
   } else {
-    return "";
+    exit(-1);
   }
 }
 

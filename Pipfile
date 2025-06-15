@@ -6,6 +6,8 @@ name = "pypi"
 [packages]
 pillow = "*"
 mypy = "*"
+fastapi = {extras = ["standard"], version = "*"}
+pyyaml = "*"
 
 [dev-packages]
 
