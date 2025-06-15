@@ -100,7 +100,9 @@ public:
         .onData([this](const char *data, int64_t len) {
           onDataCb(this->buf, data, len);
         })
-        .onComplete(onCompleteCb)
+        .onComplete([this](int64_t deliveryTag, bool redelivered) {
+          onCompleteCb(this->buf, deliveryTag, redelivered);
+        })
         .onReceived([this](const AMQP::Message &message, uint64_t deliveryTag,
                            bool redelivered) {
           onReceivedCb(this->channel, message, deliveryTag, redelivered);
@@ -111,7 +113,9 @@ public:
         .onData([this](const char *data, int64_t len) {
           onDataCb(this->buf, data, len);
         })
-        .onComplete(onCompleteCb)
+        .onComplete([this](int64_t deliveryTag, bool redelivered) {
+          onCompleteCb(this->buf, deliveryTag, redelivered);
+        })
         .onReceived([this](const AMQP::Message &message, uint64_t deliveryTag,
                            bool redelivered) {
           onReceivedPredCb(this->channel, this->onnx_sess, this->redis, message,

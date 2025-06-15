@@ -149,3 +149,9 @@ json write_celery_result_to_redis(const std::string &task_id,
 
   // Use your Redis client to SET key to j.dump()
 }
+
+void save_json(json json, std::string fname = "json_out.json") {
+  std::ofstream fs(fname, std::ios_base::out);
+  fs << json;
+  fs.close();
+}

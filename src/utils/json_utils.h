@@ -29,4 +29,6 @@ nlohmann::json to_js_string(const std::string_view &);
 
 nlohmann::json write_celery_result_to_redis(const std::string &task_id,
                                             const std::string &result);
+
+void save_json(nlohmann::json json, std::string fname);
 #endif // SRC_JSON_UTIL_H
