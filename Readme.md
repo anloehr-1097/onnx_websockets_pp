@@ -103,6 +103,7 @@ As this is part of my (early) Cpp journey and I continue to be a bloody beginner
 # Refactoring
 
 - signal handler for graceful shutdown
+- implement Tasks as Singletons
 
 ## main.cpp
 - read yolo_model file path from config file / parse as commandline arg
@@ -123,5 +124,5 @@ image processing
 
 
 
-/opt/homebrew/Caskroom/miniconda/base/lib/python3.12/site-packages/celery/backends/base.py 
-
+For response format to be inserted into Backend, see
+"/opt/homebrew/Caskroom/miniconda/base/lib/python3.12/site-packages/celery/backends/base.py"

@@ -25,7 +25,7 @@ all:
 	make clean && make prep && make build-project
 
 test:
-	echo "Testing."
+	./build/tests/cust_test
 
 run:
 	./build/src/main AMQP

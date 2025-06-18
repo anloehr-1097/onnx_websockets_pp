@@ -3,12 +3,58 @@
 #include <filesystem>
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <numeric>
 #include <onnxruntime_cxx_api.h>
 #include <opencv2/core.hpp>
 #include <opencv2/opencv.hpp>
+#include <span>
 #include <string>
 #include <string_view>
+#include <vector>
+
+struct ObbDetection {
+
+private:
+  float x1;
+  float y1;
+  float x2;
+  float y2;
+  int label;
+  float confidence;
+
+  ObbDetection(float x1, float y1, float x2, float y2, float confidence,
+               int label)
+      : x1(x1), y1(y1), x2(x2), y2(y2), label(label), confidence(confidence) {}
+
+public:
+  static ObbDetection from_c_array(const float *ar) {
+    return ObbDetection(*ar, *(ar + 1), *(ar + 2), *(ar + 3), *(ar + 4),
+                        static_cast<int>(*(ar + 5)));
+  }
+
+  std::string to_string() {
+    std::string res = "";
+    res.append(std::to_string(x1));
+    res.append(std::to_string(y1));
+    res.append(std::to_string(x2));
+    res.append(std::to_string(y2));
+    res.append(std::to_string(label));
+    res.append(std::to_string(confidence));
+    return res;
+  }
+
+  std::vector<float> to_vec() {
+    std::vector<float> vec;
+    vec.reserve(6);
+    vec.emplace_back(x1);
+    vec.emplace_back(y1);
+    vec.emplace_back(x2);
+    vec.emplace_back(y2);
+    vec.emplace_back(label);
+    vec.emplace_back(confidence);
+  }
+};
 
 struct CustOnnxConfig {
   /*
@@ -182,25 +228,29 @@ public:
     return out_tens;
   };
 
-  ptrdiff_t postprocess(std::vector<Ort::Value> &output) {
+  // ptrdiff_t postprocess(std::vector<Ort::Value> &output) {
+  std::vector<ObbDetection> postprocess(std::vector<Ort::Value> &output,
+                                        float thresh = 0.6) {
 
     // Get the shape & data type of the tensor
     auto shape = output[0].GetTensorTypeAndShapeInfo().GetShape();
     ONNXTensorElementDataType type =
         output[0].GetTensorTypeAndShapeInfo().GetElementType();
 
-    // std::cout << "shape: ( ";
-    // for (int64_t s: shape){
-    //     std::cout << s << ", ";
-    // };
-    // std::cout << ")" << std::endl;
-    // std::cout << "Type: " << type << std::endl;
-
     const void *raw_data = output[0].GetTensorData<void>();
     if (type == ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT) {
       const float *float_data = static_cast<const float *>(raw_data);
       size_t num_elements = std::accumulate(shape.begin(), shape.end(), 1,
                                             std::multiplies<size_t>());
+      std::vector<ObbDetection> ret;
+      ret.reserve(num_elements / 6);
+
+      for (int f = 0; f < num_elements / 6; f++) {
+        if (float_data[f * 6 + 4] > thresh) {
+          ret.push_back(ObbDetection::from_c_array(float_data + (f * 6)));
+        }
+      }
+      return ret;
 
       // std::cout << "Num elements: " << num_elements;
       // int dim1 = shape.at(1);
@@ -244,34 +294,40 @@ public:
       // float h = anchor_data[3];
       // float obj_score = anchor_data[4];
       // const float* class_scores = &anchor_data[4];
-      // int class_id = std::max_element(class_scores, class_scores + 84) -
-      // class_scores;
+      // int class_id = std::max_element(class_scores, class_scores +
+      // 84) - class_scores;
 
       // std::vector<float> scores {8400};
 
       // for(int c = 0; c < 300; ++c){
       //     std::vector<float> det(transposed.begin()+c*dim2,
       //     transposed.begin()+c*dim2+dim2); int class_id =
-      //     *std::max_element(det.begin()+4, det.end()); float class_score =
-      //     det.at(class_id + 4); scores.push_back(class_score); std::cout <<
-      //     "detection: cx= " << det.at(0) << " cy=" << det.at(1) << " w=" <<
-      //     det.at(2) << " h=" << det.at(3); std::cout << " total_score=" <<
-      //     class_score << " class_id=" << class_id; std::cout << std::endl;
+      //     *std::max_element(det.begin()+4, det.end()); float
+      //     class_score = det.at(class_id + 4);
+      //     scores.push_back(class_score); std::cout <<
+      //     "detection: cx= " << det.at(0) << " cy=" <<
+      //     det.at(1) << " w=" << det.at(2) << " h=" <<
+      //     det.at(3); std::cout << " total_score=" <<
+      //     class_score << " class_id=" << class_id; std::cout
+      //     << std::endl;
       //     // std::cout << "c = " << c << std::endl;
       //     if (class_score > 0.1) {
-      //         std::cout << "detection: cx= " << det.at(0) << " cy=" <<
-      //         det.at(1) << " w=" << det.at(2) << " h=" << det.at(3);
-      //         std::cout << " total_score=" << class_score << " class_id=" <<
-      //         class_id; std::cout << std::endl;
+      //         std::cout << "detection: cx= " << det.at(0) << "
+      //         cy=" << det.at(1) << " w=" << det.at(2) << " h="
+      //         << det.at(3); std::cout << " total_score=" <<
+      //         class_score << " class_id=" << class_id;
+      //         std::cout << std::endl;
       //     };
       // }
       // std::cout << "Max score: "<<
-      // scores.at(*std::max_element(scores.begin(), scores.end()));
-      std::cout << "Confidence: " << float_data[4] << "Class: " << float_data[5]
-                << std::endl;
-      return float_data[5];
+      // scores.at(*std::max_element(scores.begin(),
+      // scores.end()));
+      // std::cout << "Confidence: " << float_data[4] << "Class: " <<
+      // float_data[5]
+      //           << std::endl;
+      // return float_data[5];
     } else {
-      return -1;
+      return std::vector<ObbDetection>();
     };
   };
 };
