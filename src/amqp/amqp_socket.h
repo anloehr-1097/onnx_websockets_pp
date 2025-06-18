@@ -30,15 +30,17 @@ public:
     inet_pton(AF_INET, address, &server.sin_addr);
   }
 
-  void do_connect() {
+  int do_connect() {
     if (connect(*_sock, (struct sockaddr *)&server, sizeof(server)) < 0) {
       std::cerr << "Failed to connect" << std::endl;
-      return;
+      return 0;
     }
 
     std::cout << "Connect succesful" << std::endl;
-    return;
+    return 1;
   }
+
+  int close_connection() { return -1; }
 
   int _send(const char *message, size_t size) {
     int res = send(*_sock, message, size, 0);

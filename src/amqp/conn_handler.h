@@ -127,7 +127,7 @@ public:
     channel->onReady(
         [this] { std::cout << "Channel is ready: " << channel->ready(); });
     channel->onError(
-        [this](const char *msg) { std::cout << "Channel error: " << msg; });
+        [](const char *msg) { std::cout << "Channel error: " << msg; });
   }
 
   int setup_exchange_and_queue_routing(std::shared_ptr<AMQP::Channel>,

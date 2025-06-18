@@ -114,8 +114,12 @@ void onReceivedPredCb(std::shared_ptr<AMQP::Channel> ch,
       sess->set_input_image(std::get<cv::Mat>(img));
       auto out_tens = sess->detect();
       auto res = sess->postprocess(out_tens);
+      std::string sess_string{""};
+      for (auto f : res) {
+        sess_string.append(f.to_string());
+      }
       nlohmann::json js_resp =
-          write_celery_result_to_redis(task_id, std::to_string(res));
+          write_celery_result_to_redis(task_id, sess_string);
       std::cout << js_resp.dump() << " <-- res backend insert\n";
       std::string cmd =
           "SET celery-task-meta-" + task_id + " " + js_resp.dump();

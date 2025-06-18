@@ -8,10 +8,12 @@ FetchContent_Declare(
   GIT_TAG 52204f78f94d7512df1f0f3bea1d47437a2c3a58)
 FetchContent_MakeAvailable(googletest)
 
-add_executable(cust_test test_Yolov11Session.cpp)
+add_executable(cust_test test_Yolov11Session.cpp test_ConnHandler.cpp test_ConnHandlerFixture.cpp)
 target_link_libraries(cust_test PRIVATE
   GTest::gtest_main
-  OnnxInferLib)
+  OnnxInferLib
+  amqp
+  utils)
 
 # add_test(cust_test_gtests cust_test)  # add test to run manually
 include(GoogleTest)

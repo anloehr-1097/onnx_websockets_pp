@@ -12,12 +12,12 @@ TaskName determine_task(nlohmann::json);
 
 struct Task {
   TaskName name;
-  std::string_view queue_name;
-  std::string_view exchange_name;
-  std::string_view routing_key;
+  const std::string_view queue_name;
+  const std::string_view exchange_name;
+  const std::string_view routing_key;
 
   virtual std::variant<std::string, int> parse(nlohmann::json &) = 0;
-  virtual void callback() = 0;
+  virtual void run() = 0;
   virtual void postprocess() = 0;
 };
 
@@ -44,7 +44,7 @@ struct Predict : Task {
     std::string b64_str{js[0][0]["__value__"]};
     return base64_decode(b64_str);
   }
-  void callback() override { std::cout << "Callback\n"; }
+  void run() override { std::cout << "Run\n"; }
   void postprocess() override { std::cout << "Postprocess\n"; }
 };
 
@@ -59,7 +59,7 @@ struct Greet : Task {
   std::variant<std::string, int> parse(nlohmann::json &js) {
     return get_hello_message(js);
   }
-  void callback() override { std::cout << "Callback in Greet"; }
+  void run() override { std::cout << "Run in Greet"; }
   void postprocess() override { std::cout << "Postprocess in Greet"; }
 };
 #endif // SRC_TASKS_H
