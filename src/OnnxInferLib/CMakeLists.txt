@@ -14,7 +14,7 @@ option(ONNXRUNTIME_ROOTDIR "onnxruntime root dir")
 
 include(FetchContent)
 
-add_library(OnnxInferLib inference.cpp utils.cpp)
+add_library(OnnxInferLib inference.cpp utils.cpp types.cpp onnx_config.cpp)
 
 if(NOT ONNXRUNTIME_ROOTDIR)
   if(WIN32)

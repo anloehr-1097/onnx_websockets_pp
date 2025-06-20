@@ -138,9 +138,18 @@ json write_celery_result_to_redis(const std::string &task_id,
 
   // /opt/homebrew/Caskroom/miniconda/base/lib/python3.12/site-packages/celery/backends/base.py
   // contains info on the format of the result expected.
-  std::time_t this_time = std::time({});
-  char time_str[std::size("yy-mm-ddThh:mm:ssZ") + 1]{};
-  std::strftime(time_str, sizeof(time_str), "%FT%TZ", std::gmtime(&this_time));
+  //
+  std::time_t this_time = std::time(nullptr);
+  char buffer[32];
+  if (std::strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ",
+                    std::gmtime(&this_time)) == 0) {
+    throw std::runtime_error("Failed to format datetime");
+  }
+  std::string time_str = buffer;
+
+  // char time_str[std::size("yy-mm-ddThh:mm:ssZ")]{};
+  // std::strftime(time_str, sizeof(time_str), "%FT%TZ",
+  // std::gmtime(&this_time));
   json j = {{"status", "SUCCESS"},   {"result", result},
             {"traceback", nullptr},  {"children", nlohmann::json::array()},
             {"date_done", time_str}, {"task_id", task_id}};

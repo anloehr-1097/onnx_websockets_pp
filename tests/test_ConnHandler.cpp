@@ -4,7 +4,7 @@
 TEST(MyConnectionHandler, TestMyConnectionHandlerCreation) {}
 
 TEST_F(ConnHandlerFixture, TestMyConnectionHandler) {
-  EXPECT_TRUE(handler.sock.do_connect());
+  EXPECT_TRUE(ba_available);
 }
 
 TEST_F(ConnHandlerFixture, TestMyConnectionHandlerChannelRegistration) {

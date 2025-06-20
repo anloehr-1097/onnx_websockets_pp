@@ -21,6 +21,7 @@ if __name__ == "__main__":
     print(f"Task id image task = {res_img.task_id}")
 
     while res_img.status != "SUCCESS":
+        print(res_img.status)
         print("Waiting ... ")
         time.sleep(1)
     print(res_img.get())

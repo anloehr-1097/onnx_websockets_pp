@@ -7,6 +7,7 @@
 #include "callbacks.h"
 #include "hiredis/hiredis.h"
 #include "inference.h"
+#include "onnx_config.h"
 #include <amqpcpp.h>
 #include <arpa/inet.h>
 #include <cstdint>
@@ -28,8 +29,9 @@ public:
   std::shared_ptr<redisContext> redis;
 
   MyConnectionHandler(MySocket sock, std::filesystem::path fp,
+                      OnnxConfiguration &conf,
                       std::string_view &backend_address, int backend_port)
-      : sock(sock), onnx_sess(std::make_shared<Yolov11Session>(fp)),
+      : sock(sock), onnx_sess(std::make_shared<Yolov11Session>(fp, conf)),
         redis(std::shared_ptr<redisContext>(
             redisConnect(backend_address.data(), backend_port))) {}
 

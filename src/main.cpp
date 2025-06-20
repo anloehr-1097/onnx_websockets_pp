@@ -1,4 +1,5 @@
 #include "config.h"
+#include "onnx_config.h"
 #include <amqp_socket.h>
 #include <amqpcpp.h>
 #include <conn_handler.h>
@@ -84,6 +85,8 @@ void run_event_loop(MySocket &sock, AMQP::Connection &connection) {
 int main(int argc, char **argv) {
   auto mpath = std::filesystem::path{model_path.data()};
   auto mode = parse_cmd_args(argc, argv);
+  OnnxConfiguration &yolo_config = OnnxConfiguration::Config(
+      640, 640, 3, 80, 1, "images", "output0", "yolov11obb", "cpu");
 
   std::cout << "Mode: " << mode << std::endl;
   if (mode == "AMQP") {
@@ -91,7 +94,8 @@ int main(int argc, char **argv) {
     MySocket sock(broker_listen_port, broker_addr.data());
     sock.do_connect(); // connect to broker Rabbit MQ
     std::string_view ba(backend_addr);
-    MyConnectionHandler myHandler(sock, mpath, ba, backend_listen_port);
+    MyConnectionHandler myHandler(sock, mpath, yolo_config, ba,
+                                  backend_listen_port);
     // create a AMQP connection object
     AMQP::Connection connection(&myHandler, AMQP::Login("guest", "guest"), "/");
     run_event_loop(sock, connection);

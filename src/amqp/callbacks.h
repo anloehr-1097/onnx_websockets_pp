@@ -3,6 +3,8 @@
 #define SRC_CALLBACKS_H_
 
 #include "../OnnxInferLib/include/inference.h"
+#include "../OnnxInferLib/include/onnx_config.h"
+#include "../OnnxInferLib/include/types.h"
 #include "hiredis/hiredis.h"
 #include <amqpcpp.h>
 #include <cstdint>

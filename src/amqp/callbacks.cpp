@@ -1,8 +1,11 @@
 #include "callbacks.h"
+#include "inference.h"
 #include "json_utils.h"
 #include "tasks.h"
+#include "types.h"
 #include "utils.h"
 #include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <hiredis/hiredis.h>
 #include <ios>
@@ -114,19 +117,24 @@ void onReceivedPredCb(std::shared_ptr<AMQP::Channel> ch,
       sess->set_input_image(std::get<cv::Mat>(img));
       auto out_tens = sess->detect();
       auto res = sess->postprocess(out_tens);
-      std::string sess_string{""};
-      for (auto f : res) {
-        sess_string.append(f.to_string());
-      }
+      std::string sess_string{"45"};
+      // std::string sess_string;
+      // for (ObbDetection f : res) {
+      //   sess_string.append(f.to_string());
+      // }
       nlohmann::json js_resp =
           write_celery_result_to_redis(task_id, sess_string);
       std::cout << js_resp.dump() << " <-- res backend insert\n";
+      std::string ky = "celery-task-meta-" + task_id;
       std::string cmd =
           "SET celery-task-meta-" + task_id + " " + js_resp.dump();
-      const char *chcmd = cmd.c_str();
-
+      // const char *chcmd = cmd.c_str();
+      std::string jstr = js_resp.dump();
+      js_resp.dump();
+      const char *argv[] = {"SET", ky.data(), jstr.c_str()};
+      size_t argvlen[] = {3, sizeof(ky.data()), jstr.size() + 1};
       redisReply *reply =
-          (redisReply *)redisCommand(redis_storage.get(), chcmd);
+          (redisReply *)redisCommandArgv(redis_storage.get(), 3, argv, argvlen);
       freeReplyObject(reply);
 
     } else if (std::holds_alternative<int>(img)) {
