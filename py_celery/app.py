@@ -4,7 +4,7 @@ from PIL import Image
 import time
 
 
-img: Image.Image = Image.open("images/guac.jpeg")
+img: Image.Image = Image.open("images/bus.jpg")
 bytes_img: BytesIO = BytesIO()
 img.save(bytes_img, format=img.format)
 

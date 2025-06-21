@@ -117,11 +117,11 @@ void onReceivedPredCb(std::shared_ptr<AMQP::Channel> ch,
       sess->set_input_image(std::get<cv::Mat>(img));
       auto out_tens = sess->detect();
       auto res = sess->postprocess(out_tens);
-      std::string sess_string{"45"};
-      // std::string sess_string;
-      // for (ObbDetection f : res) {
-      //   sess_string.append(f.to_string());
-      // }
+      // std::string sess_string{"45"};
+      std::string sess_string;
+      for (ObbDetection f : res) {
+        sess_string.append(f.to_string());
+      }
       nlohmann::json js_resp =
           write_celery_result_to_redis(task_id, sess_string);
       std::cout << js_resp.dump() << " <-- res backend insert\n";
@@ -131,8 +131,8 @@ void onReceivedPredCb(std::shared_ptr<AMQP::Channel> ch,
       // const char *chcmd = cmd.c_str();
       std::string jstr = js_resp.dump();
       js_resp.dump();
-      const char *argv[] = {"SET", ky.data(), jstr.c_str()};
-      size_t argvlen[] = {3, sizeof(ky.data()), jstr.size() + 1};
+      const char *argv[] = {"SET", ky.c_str(), jstr.c_str()};
+      size_t argvlen[] = {3, ky.size(), jstr.size()};
       redisReply *reply =
           (redisReply *)redisCommandArgv(redis_storage.get(), 3, argv, argvlen);
       freeReplyObject(reply);

@@ -35,7 +35,7 @@ run-tests:
 	cd py_client && python -m unittest
 
 run-rabbit:
-	docker run -p 5672:5672 -p 15692:15692 rabbitmq
+	docker run -p 5672:5672 -p 15692:15692 --rm rabbitmq
 
 # run-celery:
 # 	celery -A py_celery.main worker --loglevel=info
