@@ -126,3 +126,5 @@ image processing
 
 For response format to be inserted into Backend, see
 "/opt/homebrew/Caskroom/miniconda/base/lib/python3.12/site-packages/celery/backends/base.py"
+
+instead of dumping result into a json string, dump into json array

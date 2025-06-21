@@ -7,7 +7,7 @@ else()
 endif()
 
 # TODO
-add_library(amqp conn_handler.cpp callbacks.cpp tasks.cpp)
+add_library(amqp conn_handler.cpp callbacks.cpp tasks.cpp amqp_utils.cpp)
 # Open CV package to handle images
 find_package(OpenCV REQUIRED)
 target_include_directories(amqp PRIVATE ${OpenCV_INCLUDE_DIRS})
