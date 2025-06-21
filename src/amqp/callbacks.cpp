@@ -114,11 +114,8 @@ void onReceivedPredCb(std::shared_ptr<AMQP::Channel> ch,
     std::variant<cv::Mat, int> img = get_image(json_out);
     if (std::holds_alternative<cv::Mat>(img)) {
       std::cout << "Image extracted.\n";
-      // img = preprocess_img(std::get<cv::Mat>(img), cv::Size(640, 640), 0);
-      sess->set_input_image(std::get<cv::Mat>(img));
-      auto out_tens = sess->detect();
+      auto res = (*sess)(std::get<cv::Mat>(img));
       json js = json::array();
-      auto res = sess->postprocess(out_tens);
       // std::string sess_string{"45"};
       std::string sess_string;
       for (ObbDetection f : res) {

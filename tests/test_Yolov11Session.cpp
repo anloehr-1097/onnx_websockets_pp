@@ -18,10 +18,7 @@ TEST(YOLOv11, TestYOLOv11SessionRun) {
   // read image from disk & preprocess image
   auto img = cv::imread("/Users/anlhr/Projects/onnx_websockets/images/bus.jpg",
                         cv::IMREAD_COLOR_RGB);
-  img = preprocess_img(img, cv::Size(640, 640), 0);
-  onnx_sess.set_input_image(img);
-  auto onnx_out_tens = onnx_sess.detect();
-  auto res = onnx_sess.postprocess(onnx_out_tens);
+  auto res = onnx_sess(img);
   auto type_vec = std::vector<ObbDetection>();
   ASSERT_TRUE(typeid(res) == typeid(type_vec));
   // ASSERT_EQ(res, 50);
