@@ -2,6 +2,7 @@
 #define SRC_ONNXINFERLIB_INFERENCE_H
 #include "onnx_config.h"
 #include "types.h"
+#include "utils.h"
 #include <cstdint>
 #include <filesystem>
 #include <functional>
@@ -10,6 +11,7 @@
 #include <numeric>
 #include <onnxruntime_cxx_api.h>
 #include <opencv2/core.hpp>
+#include <opencv2/core/types.hpp>
 #include <opencv2/opencv.hpp>
 #include <string_view>
 #include <vector>
@@ -28,30 +30,21 @@ private:
 
 public:
   // Yolov11 inference session
-  // static const int width = CustOnnxConfig::input_width();
-  // static const int height =
-  //     CustOnnxConfig::input_height(); // get this dynamically
-  // static const int channels = CustOnnxConfig::input_channels();
 
   cv::Mat input_image{};
-  // std::array<float, width * height * channels> input_image{};
-  // Ort::MemoryInfo memory_info = get_mem_info(config.device());
-  // std::array<float, CustOnnxConfig::output_classes()> results{};
   std::vector<float> results;
   Ort::Value input_tensor{nullptr};
   Ort::Value output_tensor{nullptr};
   std::string_view input_names;
   std::string_view output_names;
   int64_t result{0};
+  cv::Size img_size;
 
   Yolov11Session(std::filesystem::path model_path,
                  const OnnxConfiguration &conf)
       : config(conf), memory_info(get_mem_info(conf.device())) {
-    // input_names = CustOnnxConfig::input_names();
-    // output_names = CustOnnxConfig::output_names();
-    // make sure file path to model exists
-    input_shape = std::vector<int64_t>{1, conf.input_channels(),
-                                       conf.input_width(), conf.input_height()};
+
+    // init session if filepath exists
     if (std::filesystem::exists(model_path)) {
       session =
           Ort::Session(env, model_path.c_str(), Ort::SessionOptions{nullptr});
@@ -59,25 +52,28 @@ public:
       std::cerr << "Model path does not exist. Exiting ..";
       exit(1);
     }
+    input_shape = std::vector<int64_t>{1, conf.input_channels(),
+                                       conf.input_width(), conf.input_height()};
 
-    // output_tensor = Ort::Value::CreateTensor(memory_info, results.data(),
-    // results.size(),
-    //                                          output_shape.data(),
-    //                                          output_shape.size());
+    img_size = cv::Size(config.input_width(), config.input_height());
   }
 
-  Ort::Value read_input_image(std::vector<float> &vec) {
-    Ort::Value inp_tens =
-        Ort::Value::CreateTensor(memory_info, vec.data(), vec.size(),
-                                 input_shape.data(), input_shape.size());
-    return inp_tens;
-  }
+  // Ort::Value read_input_image(std::vector<float> &vec) {
+  //   Ort::Value inp_tens =
+  //       Ort::Value::CreateTensor(memory_info, vec.data(), vec.size(),
+  //                                input_shape.data(), input_shape.size());
+  //   return inp_tens;
+  // }
 
   void set_input_image(cv::Mat &img) {
-    assert(img.type() == CV_32FC3 && "Image type must be CV_32FC3");
-    assert(img.isContinuous() && "Image must be in contiguous memory");
-    cv::dnn::blobFromImage(img, input_image, 1.0, cv::Size(640, 640),
-                           cv::Scalar(), false, false);
+
+    cv::Mat img_mat = preprocess_img(img, img_size, 0);
+
+    assert(img_mat.type() == CV_32FC3 && "Image type must be CV_32FC3");
+    assert(img_mat.isContinuous() && "Image must be in contiguous memory");
+    // create 4d array from image and save into
+    cv::dnn::blobFromImage(img_mat, input_image, 1.0, img_size, cv::Scalar(),
+                           false, false);
   }
 
   std::vector<Ort::Value> detect() {
@@ -92,25 +88,6 @@ public:
         session.Run(run_options, input_names, &input_tens, 1, output_names, 1);
     return out_tens;
   }
-
-  // Ort::Value read_input(const cv::Mat &img) {
-  // //     // Allocate a buffer that ONNX Runtime will manage
-  //
-  //     Ort::MemoryInfo mem_info =
-  //     Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeDefault);
-  //
-  //     Ort::Value in = Ort::Value::CreateTensor<float>(
-  //         memory_info,
-  //         img.ptr<float>(),
-  //         img.total(),
-  //         input_shape.data(),
-  //         input_shape.size()
-  //     );
-  //
-  //
-  //     float* tensor_data = in.GetTensorMutableData<float>();
-  //     return in;
-  // };
 
   void get_input_output_names() {
     Ort::AllocatorWithDefaultOptions allocator;
