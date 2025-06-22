@@ -1,5 +1,7 @@
 #include "json_utils.h"
-#include "base64.h"
+
+#include <opencv2/core/hal/interface.h>
+
 #include <chrono>
 #include <ctime>
 #include <fstream>
@@ -7,12 +9,13 @@
 #include <iostream>
 #include <map>
 #include <nlohmann/json.hpp>
-#include <opencv2/core/hal/interface.h>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <string>
 #include <variant>
 #include <vector>
+
+#include "base64.h"
 
 using json = nlohmann::json;
 
@@ -22,17 +25,19 @@ void write_base64_to_file(const std::string &data) {
   fp << data;
   fp.close();
 }
+
 cv::Mat parse_binary_image(const std::vector<uchar> &data) {
   // assume the string is binary64 encoding of image
-  auto now = std::chrono::system_clock::now();
-  auto in_time_t = std::chrono::system_clock::to_time_t(now);
-  std::stringstream ss;
-  ss << "decoded_img_"
-     << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d_%H-%M-%S")
-     << ".jpeg";
-
   cv::Mat img = cv::imdecode(data, cv::IMREAD_UNCHANGED).clone();
-  cv::imwrite(ss.str(), img);
+  // if (write) {
+  //   auto now = std::chrono::system_clock::now();
+  //   auto in_time_t = std::chrono::system_clock::to_time_t(now);
+  //   std::stringstream ss;
+  //   ss << "decoded_img_"
+  //      << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d_%H-%M-%S")
+  //      << ".jpeg";
+  //   cv::imwrite(ss.str(), img);
+  // }
   return img;
 }
 
@@ -66,9 +71,7 @@ std::variant<std::string, int> get_hello_message(const nlohmann::json &js) {
   if (determine_msg_type(js) == STRING_MSG) {
     return parse_string_msg(js);
   } else if (determine_msg_type(js) == ARRAY_MSG) {
-
     for (auto elem : js) {
-
       auto ret = get_hello_message(elem);
       if (std::holds_alternative<std::string>(ret)) {
         return ret;
@@ -135,7 +138,6 @@ json to_js_string(const std::string_view &str) {
 
 json write_celery_result_to_redis(const std::string &task_id,
                                   const std::string &result) {
-
   // /opt/homebrew/Caskroom/miniconda/base/lib/python3.12/site-packages/celery/backends/base.py
   // contains info on the format of the result expected.
   //

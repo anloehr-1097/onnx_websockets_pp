@@ -8,7 +8,7 @@ FetchContent_Declare(
   GIT_TAG 52204f78f94d7512df1f0f3bea1d47437a2c3a58)
 FetchContent_MakeAvailable(googletest)
 
-add_executable(cust_test test_Yolov11Session.cpp test_ConnHandler.cpp test_ConnHandlerFixture.cpp test_CustOnnxConfig.cpp test_RedisConnection.cpp)
+add_executable(cust_test test_Yolov11Session.cpp test_ConnHandler.cpp test_ConnHandlerFixture.cpp test_CustOnnxConfig.cpp test_RedisConnection.cpp test_Yolov11SessionFixture.h)
 target_link_libraries(cust_test PRIVATE
   GTest::gtest_main
   OnnxInferLib

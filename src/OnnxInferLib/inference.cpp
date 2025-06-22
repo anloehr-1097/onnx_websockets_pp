@@ -2,10 +2,11 @@
 
 #include <opencv2/core/hal/interface.h>
 
-#include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <filesystem>
 #include <functional>
+#include <iostream>
 #include <numeric>
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
@@ -25,9 +26,25 @@ Ort::MemoryInfo get_mem_info(std::string_view memtype) {
     throw "GPU memory info not implemented yet.";
   }
 }
-// Yolov11Session::Yolov11Session(std::filesystem::path model_path,
-//                                const OnnxConfiguration &conf)
-//     : config(conf), memory_info(get_mem_info(conf.device())) {}
+
+Yolov11Session::Yolov11Session(std::filesystem::path model_path,
+                               const OnnxConfiguration &conf)
+    : config(conf), memory_info(get_mem_info(conf.device())) {
+  // init session if filepath exists
+  if (std::filesystem::exists(model_path)) {
+    session =
+        Ort::Session(env, model_path.c_str(), Ort::SessionOptions{nullptr});
+  } else {
+    std::cerr << "Model path " << model_path << " does not exist. Exiting ..";
+    exit(1);
+  }
+  input_shape = {1, conf.input_channels(), conf.input_width(),
+                 conf.input_height()};
+
+  img_size = cv::Size(config.input_width(), config.input_height());
+  run_opts = Ort::RunOptions();
+}
+
 void Yolov11Session::set_input_image(cv::Mat &img) {
   cv::Mat img_mat = preprocess_img(img, img_size, 0);
   assert(img_mat.type() == CV_32FC3 && "Image type must be CV_32FC3");

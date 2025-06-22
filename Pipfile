@@ -9,6 +9,8 @@ mypy = "*"
 fastapi = {extras = ["standard"], version = "*"}
 pyyaml = "*"
 matplotlib = "*"
+onnx = "*"
+onnxruntime = "*"
 
 [dev-packages]
 debugpy = "*"
