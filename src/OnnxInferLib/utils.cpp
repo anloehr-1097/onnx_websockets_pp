@@ -1,7 +1,10 @@
 #include "utils.h"
+#include <iostream>
+#include <string>
+#include <vector>
 #define DEBUG 1
 
-void print_image(const std::string fpath) {
+void show_image(const std::string fpath) {
   cv::Mat image = cv::imread(fpath, cv::IMREAD_COLOR_RGB);
 
   std::cout << image.size();
@@ -10,16 +13,15 @@ void print_image(const std::string fpath) {
   std::cout << std::endl;
 
   if (!image.data) {
-    printf("No image data \n");
+    std::cerr << "No image data \n";
   } else {
     cv::namedWindow("Display Image", cv::WINDOW_NORMAL);
     cv::imshow("Display Image", image);
     cv::waitKey(0);
-  };
-};
+  }
+}
 
 cv::Mat im_normalize(cv::Mat img) {
-
   // image net normalization params
   cv::Scalar mean{0.485, 0.456, 0.406};
   cv::Scalar stddev{0.229, 0.224, 0.225};
@@ -82,4 +84,4 @@ cv::Mat preprocess_img(cv::Mat &src_im, cv::Size sz = cv::Size(224, 224),
   //   // return final;
   //   return final_return;
   // } else return tmp_img;
-};
+}

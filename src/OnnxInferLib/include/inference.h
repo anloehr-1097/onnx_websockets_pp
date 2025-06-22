@@ -1,15 +1,12 @@
 #ifndef SRC_ONNXINFERLIB_INFERENCE_H
 #define SRC_ONNXINFERLIB_INFERENCE_H
 #include "onnx_config.h"
-#include "onnxruntime_c_api.h"
 #include "types.h"
 #include "utils.h"
+#include <cassert>
 #include <cstdint>
 #include <filesystem>
-#include <functional>
 #include <iostream>
-#include <memory>
-#include <numeric>
 #include <onnxruntime_cxx_api.h>
 #include <opencv2/core.hpp>
 #include <opencv2/core/types.hpp>
@@ -26,7 +23,9 @@ private:
   Ort::Session session{nullptr};
   const OnnxConfiguration &config;
   Ort::MemoryInfo memory_info;
+  Ort::RunOptions run_opts;
   std::vector<int64_t> input_shape;
+  size_t output_count = 1; // TODO(andy) next refactoring --> config
   cv::Mat input_image{};
   std::vector<float> results;
   Ort::Value input_tensor{nullptr};
@@ -53,6 +52,7 @@ public:
                    conf.input_height()};
 
     img_size = cv::Size(config.input_width(), config.input_height());
+    run_opts = Ort::RunOptions();
   }
   // call operator to feed image and obtain output
   std::vector<ObbDetection> operator()(cv::Mat &img);
@@ -62,6 +62,7 @@ private:
   std::vector<Ort::Value> detect();
   std::vector<ObbDetection> postprocess(std::vector<Ort::Value> &output,
                                         float thresh = 0.6);
+  void set_run_opts() { assert(false && "Not Implemented yet."); }
 };
 
 #endif // SRC_ONNXINFERLIB_INFERENCE_H

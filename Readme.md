@@ -123,6 +123,8 @@ onnx inference
 image processing
 
 
+support GPU execution or any other execution provider
+
 
 For response format to be inserted into Backend, see
 "/opt/homebrew/Caskroom/miniconda/base/lib/python3.12/site-packages/celery/backends/base.py"

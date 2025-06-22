@@ -5,38 +5,6 @@
 #include <string>
 #include <string_view>
 
-struct CustOnnxConfig {
-  /*
-   * Keep all configs regarding model here.
-   * This has to be adapted.
-   * */
-private:
-  const int _input_width = 640;
-  const int _input_height = 640;
-  const int _input_channels = 3;
-  const int _output_classes = 80;
-  const int _num_inputs = 1;
-
-  const std::string_view _input_name = "images";
-  const std::string_view _output_name = "output0";
-  const std::string_view _model_name = "../resnet_101.onnx";
-  const std::string_view _device = "cpu";
-
-  // const std::array<std::string, _num_inputs> _input_names;
-
-public:
-  const int input_width() { return _input_width; }
-  const int input_height() { return _input_height; }
-  const int input_channels() { return _input_channels; }
-  const int output_classes() { return _output_classes; }
-  // const std::string_view input_names() { return _input_name; };
-  // const std::string_view output_names() { return _output_name; };
-  const char *input_names() { return _input_name.data(); }
-  const char *output_names() { return _output_name.data(); }
-  const char *model_name() { return _model_name.data(); }
-  const char *device() { return _device.data(); }
-};
-
 class OnnxConfiguration {
 
 private:
