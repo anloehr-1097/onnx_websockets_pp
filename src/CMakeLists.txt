@@ -1,17 +1,3 @@
-# #onnxruntime providers
-# # option(onnxruntime_USE_CUDA "Build with CUDA support" OFF)
-# # option(onnxruntime_USE_TENSORRT "Build with TensorRT support" OFF)
-# # option(LIBPNG_ROOTDIR "libpng root dir")
-# # option(ONNXRUNTIME_ROOTDIR "onnxruntime root dir")
-
-# if(NOT ONNXRUNTIME_ROOTDIR)
-#   if(WIN32)
-#     set(ONNXRUNTIME_ROOTDIR "C:/Program Files/onnxruntime")
-# else()
-#     # TODO make this more flexible
-#     set(ONNXRUNTIME_ROOTDIR "/Users/anlhr/Projects/onnx_websockets/src/onnxruntime")
-#   endif()
-# endif()
 
 # find_package(Asio REQUIRED)
 
@@ -38,9 +24,7 @@
 
 # add_executable(main main.cpp callbacks.cpp json_utils.cpp base64.cpp tasks.cpp)
 add_executable(main main.cpp)
-
-# target_include_directories(main PUBLIC "/Users/anlhr/Projects/onnx_websockets/src/websocketpp" "/opt/homebrew/include" "/Users/anlhr/Projects/AMQP-CPP/include")
-target_include_directories(main PUBLIC  "/opt/homebrew/include") 
+target_include_directories(main PUBLIC  "/opt/homebrew/include")
 
 # Define ASIO_STANDALONE for standalone Asio usage
 # target_compile_definitions(main PRIVATE ASIO_STANDALONE)
@@ -52,5 +36,4 @@ add_subdirectory(utils)
 
 target_link_libraries(main PRIVATE OnnxInferLib)
 target_link_libraries(main PRIVATE amqp)
-
-# target_link_libraries(main PUBLIC nlohmann_json::nlohmann_json)
+target_link_libraries(main PUBLIC nlohmann_json::nlohmann_json)

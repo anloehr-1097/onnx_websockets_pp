@@ -1,0 +1,12 @@
+images/
+py_celery/
+py_client/
+.DS_Store
+.clang-format
+Pipfile
+Pipfile.lock
+build/
+*.*~
+onnxruntime-inference-examples/
+AMQP-CPP/
+src/OnnxInferLib/onnxruntime

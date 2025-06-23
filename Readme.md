@@ -98,11 +98,9 @@ onData should check if the socket is writable, then send, else delay or abort
 
 Define config & model for value stream model onnx inferenece 
 
-Define CI/CD scripts
-
-Define Docker Container used for inferencing
-
 Define docker compose file to ensure all the required services are up for testing and running the amqp consumer application
+
+Define CI/CD scripts
 
 Fork repo --> new repo clean
 
@@ -120,6 +118,7 @@ Complete unit testing suite for AMQP module:
 	amqp_utils
 
 
+Resolve all compiler warning
 
 
 Complete unit testing suite for utils module: 
@@ -130,3 +129,5 @@ json_utils
 support GPU execution or any other execution provider
 
 read login information for AMQP connection from config file
+
+Check for resource leaks using sanitizers

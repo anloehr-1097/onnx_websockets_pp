@@ -12,8 +12,7 @@
 using namespace std::literals;
 
 TEST(Onnx_Infer_Lib_Utils, Preprocess_Img) {
-  const std::string img_path =
-      "/Users/anlhr/Projects/onnx_websockets/images/bus.jpg"s;
+  const std::string img_path = "images/bus.jpg"s;
   const std::filesystem::path fpath(img_path);
   assert(std::filesystem::exists(fpath) && "Image path does not exist");
   cv::Mat mat = cv::imread(img_path);

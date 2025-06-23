@@ -8,8 +8,7 @@
 
 class Yolov11Fixture : public testing::Test {
  protected:
-  static constexpr std::string_view model_path =
-      "/Users/anlhr/Projects/onnx_websockets/models/yolo11x_obb.onnx";
+  static constexpr std::string_view model_path = "models/yolo11x_obb.onnx";
   std::filesystem::path mpath = std::filesystem::path{model_path.data()};
 
   std::string input_names{"images"};

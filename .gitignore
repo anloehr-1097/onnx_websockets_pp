@@ -7,6 +7,7 @@ src/OnnxInferLib/onnxruntime/*
 *.jpeg
 *.jpg
 src/websocketpp/
+AMQP-CPP/
 
 
 *~

@@ -6,8 +6,9 @@
 #define DEBUG 1
 
 void show_image(const std::string fpath) {
-  cv::Mat image = cv::imread(fpath, cv::IMREAD_COLOR_RGB);
-
+  // cv::Mat image = cv::imread(fpath, cv::IMREAD_COLOR_RGB);
+  cv::Mat image = cv::imread(fpath, cv::IMREAD_COLOR);
+  cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
   std::cout << image.size();
   std::cout << image.channels();
   std::cout << image.type();

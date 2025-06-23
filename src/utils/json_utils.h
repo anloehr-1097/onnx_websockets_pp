@@ -5,9 +5,11 @@
 #include <opencv2/opencv.hpp>
 #include <string>
 #include <string_view>
+#include <variant>
 #include <vector>
 
-template <typename T> struct JM {
+template <typename T>
+struct JM {
   T member;
   T get() { return member; }
   explicit JM(T _mem) : member(_mem) {}
@@ -31,4 +33,4 @@ nlohmann::json write_celery_result_to_redis(const std::string &task_id,
                                             const std::string &result);
 
 void save_json(nlohmann::json json, std::string fname);
-#endif // SRC_JSON_UTIL_H
+#endif  // SRC_JSON_UTIL_H
