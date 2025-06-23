@@ -6,44 +6,24 @@ Originally, the idea was to server the model via websockets as can be told by so
 # Next Steps
 This serves as my own TODO list.
 
-## Milestones
-2. play back detection in a certain format from CPP --> Python & parse on python side
-3. Write unittests and refactor code 
-4. refactoring
-
 ## Websocket utility server (stashed)
 - [x] send image via websocket connection to backend
 - [ ] define ouput format, send results back
 
 ## OnnxInferLib
-- [ ] interface __inference : image -> result__ accepting arbitrary images
-- [ ] __class InputHandler__ capable of receiving and preprocessing image
-- [ ] the RUN method of the onnx_sess should be of type __Run: images -> result__
-- [ ] write postprocessor to handle outputs of the model
+- [x] interface __inference : image -> result__ accepting arbitrary images
 
 ### Input images
-- [ ] robustify
 - [ ] maybe integrate preprocessor into main class to determine resize sz + norm constants dynamically
 
-
-### postprocessor
-- [ ] parse all outputs, not just the single highest one --> store in vector
 
 ### flexibility
 - [ ] read input output sizes from model, same with input output names --> no hardcoding
 
 ## model
 - [x] integrate YOLOv11 instead of random model used to date
-- [ ] redesign constructor to allow for other inference providers
-- [ ]
 
 
-## AMQP
-- reset internal buffer once message has been completely processed
-
-
-## GTest 
-- include and write tests
 
 # Dependencies
 - OpenCV
@@ -97,23 +77,12 @@ output name: output0
 # Disclaimer
 As this is part of my (early) Cpp journey and I continue to be a bloody beginner, the implementation does not claim to be {memory safe, optimized, <you name it>}.
 
+For response format to be inserted into Backend, see
+"/opt/homebrew/Caskroom/miniconda/base/lib/python3.12/site-packages/celery/backends/base.py"
 
 
 
-# Refactoring
-
-- signal handler for graceful shutdown
-- implement Tasks as Singletons
-
-## main.cpp
-- read yolo_model file path from config file / parse as commandline arg
-- read login information for AMQP connection from config file
-
-
-- onData should check if the socket is writable, then send, else delay or abort
-
-main components: 
-
+# Main Components
 connection
 connectionHandler
 MySocket
@@ -123,33 +92,41 @@ onnx inference
 image processing
 
 
-support GPU execution or any other execution provider
+# 06/23/2025 Tasks sorted acc to priority
+
+onData should check if the socket is writable, then send, else delay or abort
+
+Define config & model for value stream model onnx inferenece 
+
+Define CI/CD scripts
+
+Define Docker Container used for inferencing
+
+Define docker compose file to ensure all the required services are up for testing and running the amqp consumer application
+
+Fork repo --> new repo clean
+
+Define the task interface
+
+signal handler for graceful shutdown
+
+*Bug*: Sometimes, the prediction task for images is not called even when triggered from python client. After a restart of the cpp consumer, it consumes the prediction tasks infinitely. The most effective method to solve this issue is to restart the rabbit-mq message broker and the redis backend
+
+Complete unit testing suite for AMQP module: 
+	tasks
+	conn_handler
+	callbacks
+	amqp_socket
+	amqp_utils
 
 
-For response format to be inserted into Backend, see
-"/opt/homebrew/Caskroom/miniconda/base/lib/python3.12/site-packages/celery/backends/base.py"
-
-instead of dumping result into a json string, dump into json array
 
 
-
-
-
-# 06/23/2025
-
-Yolov11Session
-OnnxConfig
-types
-utils
-
-
-tasks
-conn_handler
-callbacks
-amqp_socket
-amqp_utils
-
-
+Complete unit testing suite for utils module: 
 base64
 debug_utils
 json_utils
+
+support GPU execution or any other execution provider
+
+read login information for AMQP connection from config file
