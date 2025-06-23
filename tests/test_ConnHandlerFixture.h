@@ -1,17 +1,18 @@
 #pragma once
-#include "../config.h"
-#include "onnx_config.h"
 #include <amqp_socket.h>
 #include <amqpcpp.h>
 #include <conn_handler.h>
-#include <filesystem>
 #include <gtest/gtest.h>
+
+#include <filesystem>
 #include <string_view>
 #include <system_error>
 
-class ConnHandlerFixture : public testing::Test {
+#include "../config.h"
+#include "onnx_config.h"
 
-protected:
+class ConnHandlerFixture : public testing::Test {
+ protected:
   static constexpr std::string_view model_path =
       "/Users/anlhr/Projects/onnx_websockets/models/yolo11x_obb.onnx";
   std::filesystem::path mpath = std::filesystem::path{model_path.data()};
@@ -30,5 +31,5 @@ protected:
   AMQP::Connection con =
       AMQP::Connection(&handler, AMQP::Login("guest", "guest"), "/");
 
-  bool ba_available = sock.do_connect();
+  bool ba_available = sock.connect();
 };

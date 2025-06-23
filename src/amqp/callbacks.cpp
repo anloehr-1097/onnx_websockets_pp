@@ -1,14 +1,10 @@
 #include "callbacks.h"
-#include "amqp_utils.h"
-#include "inference.h"
-#include "json_utils.h"
-#include "tasks.h"
-#include "types.h"
-#include "utils.h"
+
+#include <hiredis/hiredis.h>
+
 #include <cstdint>
 #include <cstring>
 #include <fstream>
-#include <hiredis/hiredis.h>
 #include <ios>
 #include <iostream>
 #include <memory>
@@ -18,12 +14,19 @@
 #include <string_view>
 #include <variant>
 
+#include "amqp_utils.h"
+#include "inference.h"
+#include "json_utils.h"
+#include "tasks.h"
+#include "types.h"
+#include "utils.h"
+
 using json = nlohmann::json;
 
 void onDataCb(std::string &buf, const char *data, int64_t len) {
   std::cout << "onData called\nBuffer: ";
   buf.append(data);
-  std::cout << buf << std::endl;
+  //  std::cout << buf << std::endl;
 }
 
 void onSuccessCb(const std::string &consumer_tag) {
@@ -93,7 +96,6 @@ void onReceivedPredCb(std::shared_ptr<AMQP::Channel> ch,
                       std::shared_ptr<redisContext> redis_storage,
                       const AMQP::Message &message, uint64_t deliveryTag,
                       bool redelivered) {
-
   ch->ack(deliveryTag);
   std::cout << "Acknowledged message with tag " << deliveryTag << std::endl;
   std::string_view rk{message.routingkey()};

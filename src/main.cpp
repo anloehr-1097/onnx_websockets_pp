@@ -1,12 +1,14 @@
-#include "config.h"
-#include "onnx_config.h"
 #include <amqp_socket.h>
 #include <amqpcpp.h>
 #include <conn_handler.h>
+#include <sys/time.h>
+
 #include <filesystem>
 #include <iostream>
 #include <string>
-#include <sys/time.h>
+
+#include "config.h"
+#include "onnx_config.h"
 
 std::string parse_cmd_args(int argc, char **argv) {
   if (argc == 1) {
@@ -52,7 +54,7 @@ void run_event_loop(MySocket &sock, AMQP::Connection &connection) {
 
     if (poll_status == 1) {
       // socket is readable, ready to receive message
-      received = sock._receive();
+      received = sock.receive();
       if (received > 0) {
         // Pass incoming data to the AMQP connection
         while (parsed_bytes < received) {
@@ -92,7 +94,7 @@ int main(int argc, char **argv) {
   if (mode == "AMQP") {
     // create socket underlying AMQP connection used by connection handler
     MySocket sock(broker_listen_port, broker_addr.data());
-    sock.do_connect(); // connect to broker Rabbit MQ
+    sock.connect();  // connect to broker Rabbit MQ
     std::string_view ba(backend_addr);
     MyConnectionHandler myHandler(sock, mpath, yolo_config, ba,
                                   backend_listen_port);

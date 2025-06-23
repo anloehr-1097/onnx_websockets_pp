@@ -1,15 +1,11 @@
 #ifndef SRC_AMPQ_H
 #define SRC_AMPQ_H
 
-#include "../config.h"
-#include "../utils/json_utils.h"
-#include "amqp_socket.h"
-#include "callbacks.h"
-#include "hiredis/hiredis.h"
-#include "inference.h"
-#include "onnx_config.h"
 #include <amqpcpp.h>
 #include <arpa/inet.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
 #include <cstdint>
 #include <cstring>
 #include <functional>
@@ -17,12 +13,18 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <sys/socket.h>
-#include <unistd.h>
+
+#include "../config.h"
+#include "../utils/json_utils.h"
+#include "amqp_socket.h"
+#include "callbacks.h"
+#include "hiredis/hiredis.h"
+#include "inference.h"
+#include "onnx_config.h"
 
 class MyConnectionHandler : public AMQP::ConnectionHandler {
-public:
-  MySocket sock; // socket descriptor
+ public:
+  MySocket sock;  // socket descriptor
   std::shared_ptr<AMQP::Channel> channel;
   std::string buf = {};
   std::shared_ptr<Yolov11Session> onnx_sess;
@@ -31,7 +33,8 @@ public:
   MyConnectionHandler(MySocket sock, std::filesystem::path fp,
                       OnnxConfiguration &conf,
                       std::string_view &backend_address, int backend_port)
-      : sock(sock), onnx_sess(std::make_shared<Yolov11Session>(fp, conf)),
+      : sock(sock),
+        onnx_sess(std::make_shared<Yolov11Session>(fp, conf)),
         redis(std::shared_ptr<redisContext>(
             redisConnect(backend_address.data(), backend_port))) {}
 
@@ -55,7 +58,7 @@ public:
     // TODO(andy) should check if socket is writable, then write
     size_t sent = 0;
     while (sent < size) {
-      int res = sock._send(data, size);
+      int res = sock.send(data, size);
       if (res <= 0) {
         std::cerr << "Send error\n";
         break;
@@ -88,7 +91,6 @@ public:
 
     if ((status = setup_exchange_and_queue_routing(
              channel, "yolo_pred", "yolo prediction", "yolo_inf")) != 0) {
-
       std::cerr << "Failed setting up exchange & key.\n";
     };
 
@@ -136,7 +138,6 @@ public:
                                        std::string_view exchange_name,
                                        std::string_view qname,
                                        std::string_view routing_key) {
-
     channel->declareExchange(exchange_name, AMQP::direct, AMQP::durable);
     channel->declareQueue(qname);
     channel->bindQueue(exchange_name, qname, routing_key);
@@ -179,8 +180,8 @@ public:
                        uint16_t interval) override {
     // negotiate heartbeat interval
     // uint16_t _five = 5;
-    return heartbeat_interval; // from src/config.h
+    return heartbeat_interval;  // from src/config.h
   }
 };
 
-#endif // SRC_AMPQ_H
+#endif  // SRC_AMPQ_H
