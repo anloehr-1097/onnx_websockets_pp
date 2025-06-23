@@ -15,4 +15,3 @@ TEST(CustOnnxConfig, TestCustOnnxConfigCreate) {
   ASSERT_EQ(&inf_conf, &new_conf);
 }
 
-// ASSERT_EQ(, val2)

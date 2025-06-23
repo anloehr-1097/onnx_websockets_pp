@@ -1,4 +1,8 @@
 #include "types.h"
+
+#include <iomanip>
+#include <ios>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -7,19 +11,14 @@ ObbDetection::ObbDetection(float x1, float y1, float x2, float y2,
     : x1(x1), y1(y1), x2(x2), y2(y2), label(label), confidence(confidence) {}
 
 std::string ObbDetection::to_string() {
-  std::string res = "";
-  res.append(std::to_string(x1))
-      .append(" ")
-      .append(std::to_string(y1))
-      .append(" ")
-      .append(std::to_string(x2))
-      .append(" ")
-      .append(std::to_string(y2))
-      .append(" ")
-      .append(std::to_string(label))
-      .append(" ")
-      .append(std::to_string(confidence));
-  return res;
+  std::ostringstream ss;
+  ss << std::fixed << std::setprecision(3) << x1 << " ";
+  ss << std::fixed << std::setprecision(3) << y1 << " ";
+  ss << std::fixed << std::setprecision(3) << x2 << " ";
+  ss << std::fixed << std::setprecision(3) << y2 << " ";
+  ss << std::fixed << std::setprecision(3) << label << " ";
+  ss << std::fixed << std::setprecision(3) << confidence;
+  return ss.str();
 }
 
 std::vector<float> ObbDetection::to_vec() {

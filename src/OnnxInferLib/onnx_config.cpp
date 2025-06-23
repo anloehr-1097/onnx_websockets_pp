@@ -1,8 +1,17 @@
+/*
+ * File name: onnx_config.cpp
+ * Author: Andreas Loehr
+ * ------
+ * Copyright (c) 2025 Andreas Loehr
+ */
+
 #include "include/onnx_config.h"
+
 #include <iostream>
 #include <memory>
 #include <string>
 
+// OnnxConfiguration is Singleton
 std::unique_ptr<OnnxConfiguration> OnnxConfiguration::_config{nullptr};
 
 OnnxConfiguration::OnnxConfiguration(int inp_width, int inp_height,
@@ -12,11 +21,15 @@ OnnxConfiguration::OnnxConfiguration(int inp_width, int inp_height,
                                      const std::string &output_name,
                                      const std::string &model_name,
                                      const std::string &device)
-    : _input_width(inp_width), _input_height(inp_height),
-      _input_channels(inp_channels), _output_classes(output_classes),
-      _num_inputs(num_inputs), _input_name(input_name),
-      _output_name(output_name), _model_name(model_name), _device(device) {
-
+    : _input_width(inp_width),
+      _input_height(inp_height),
+      _input_channels(inp_channels),
+      _output_classes(output_classes),
+      _num_inputs(num_inputs),
+      _input_name(input_name),
+      _output_name(output_name),
+      _model_name(model_name),
+      _device(device) {
   std::cout << "Creation of OnnxConfiguration.\n";
 }
 OnnxConfiguration &OnnxConfiguration::Config(int inp_width, int inp_height,
@@ -42,7 +55,6 @@ OnnxConfiguration &OnnxConfiguration::Config(int inp_width, int inp_height,
         model_name == _config->_model_name && device == _config->_device) {
       return *_config;
     } else {
-
       OnnxConfiguration *_conf = new OnnxConfiguration(
           inp_width, inp_height, inp_channels, output_classes, num_inputs,
           input_name, output_name, model_name, device);

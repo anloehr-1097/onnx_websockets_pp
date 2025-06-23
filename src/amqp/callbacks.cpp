@@ -26,7 +26,6 @@ using json = nlohmann::json;
 void onDataCb(std::string &buf, const char *data, int64_t len) {
   std::cout << "onData called\nBuffer: ";
   buf.append(data);
-  //  std::cout << buf << std::endl;
 }
 
 void onSuccessCb(const std::string &consumer_tag) {

@@ -2,14 +2,14 @@
 #ifndef SRC_CALLBACKS_H_
 #define SRC_CALLBACKS_H_
 
-#include "../OnnxInferLib/include/inference.h"
-#include "../OnnxInferLib/include/onnx_config.h"
-#include "../OnnxInferLib/include/types.h"
-#include "hiredis/hiredis.h"
 #include <amqpcpp.h>
+
 #include <cstdint>
 #include <memory>
 #include <string>
+
+#include "../OnnxInferLib/include/inference.h"
+#include "hiredis/hiredis.h"
 
 // callback when chunk of data gets delivered using connection
 void onDataCb(std::string &buf, const char *message, int64_t len);
@@ -24,6 +24,7 @@ void onCompleteCb(std::string &buffer, int64_t deliveryTag, bool redelivered);
 void onReceivedCb(std::shared_ptr<AMQP::Channel> ch,
                   const AMQP::Message &message, uint64_t deliveryTag,
                   bool redelivered);
+
 void onReceivedPredCb(std::shared_ptr<AMQP::Channel> ch,
                       std::shared_ptr<Yolov11Session> sess,
                       std::shared_ptr<redisContext> redis,
@@ -33,4 +34,4 @@ void onReceivedPredCb(std::shared_ptr<AMQP::Channel> ch,
 // function called when channel
 void onErrorCb(const char *message);
 
-#endif // SRC_CALLBACKS_H_
+#endif  // SRC_CALLBACKS_H_

@@ -1,4 +1,5 @@
 #include "utils.h"
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -19,16 +20,6 @@ void show_image(const std::string fpath) {
     cv::imshow("Display Image", image);
     cv::waitKey(0);
   }
-}
-
-cv::Mat im_normalize(cv::Mat img) {
-  // image net normalization params
-  cv::Scalar mean{0.485, 0.456, 0.406};
-  cv::Scalar stddev{0.229, 0.224, 0.225};
-  cv::Mat normalized;
-  cv::subtract(img, mean, normalized);
-  cv::divide(normalized, stddev, normalized);
-  return normalized;
 }
 
 void normalize_img(cv::Mat &img, cv::Mat &result) {
